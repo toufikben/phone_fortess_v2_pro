@@ -102,7 +102,7 @@ class CameraForegroundService : Service(), LifecycleOwner {
         var event = eventRepository.getById(eventId) ?: return
         if (event.status == SecurityEventStatus.SENT || event.status == SecurityEventStatus.FAILED_FINAL || event.status == SecurityEventStatus.CANCELLED) return
         if (event.status == SecurityEventStatus.IN_PROGRESS) {
-            Logger.i("Event already claimed; ignoring duplicate start: $eventId")
+            Logger.i("Event already claimed; ignoring duplicate start")
             return
         }
         if (event.status == SecurityEventStatus.FAILED_RETRYABLE && event.operation != EventOperation.CAPTURE) return

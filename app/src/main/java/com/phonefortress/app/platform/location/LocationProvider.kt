@@ -66,8 +66,8 @@ class LocationProvider @Inject constructor(
                     .addOnSuccessListener { loc ->
                         if (cont.isActive) cont.resume(loc?.takeIf(::isRecent)?.toResult())
                     }
-                    .addOnFailureListener { e ->
-                        Logger.w("Last location failed: ${e.message}")
+                    .addOnFailureListener {
+                        Logger.w("Last location request failed")
                         if (cont.isActive) cont.resume(null)
                     }
             } catch (e: SecurityException) {
@@ -82,8 +82,8 @@ class LocationProvider @Inject constructor(
                     .addOnSuccessListener { loc ->
                         if (cont.isActive) cont.resume(loc?.toResult())
                     }
-                    .addOnFailureListener { e ->
-                        Logger.w("Current location failed: ${e.message}")
+                    .addOnFailureListener {
+                        Logger.w("Current location request failed")
                         if (cont.isActive) cont.resume(null)
                     }
             } catch (e: SecurityException) {

@@ -34,7 +34,7 @@ class EventDispatcherWorker @AssistedInject constructor(
             events.forEach { event ->
                 when (dispatchSingle(event)) {
                     DispatchOutcome.RETRY -> retryable = true
-                    DispatchOutcome.FAILED -> Logger.w("Event ${event.id} reached final failure")
+                    DispatchOutcome.FAILED -> Logger.w("An event reached final failure")
                     DispatchOutcome.DONE, DispatchOutcome.SKIPPED -> Unit
                 }
             }

@@ -82,6 +82,6 @@ object WorkScheduler {
             cancelAllWorkByTag("capture_retry_$eventId")
             cancelAllWorkByTag("dispatch_$eventId")
         }
-        Logger.i("Cancelled work for $eventId")
+        Logger.i("Cancelled event work")
     }
 }

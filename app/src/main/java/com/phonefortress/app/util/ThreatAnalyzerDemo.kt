@@ -18,7 +18,7 @@ class ThreatAnalyzerDemo @Inject constructor(
             isInSafeZone = false,
             isTest = true
         )
-        Logger.i("DEMO: score=${result.score}, level=${result.level}, reasons=${result.reasons}")
+        Logger.i("DEMO: threat evaluation completed")
         result
     }
 }
