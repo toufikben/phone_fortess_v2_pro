@@ -8,7 +8,7 @@ catalog for every supported locale.
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-LANGS = ["fr", "es", "de", "pt", "it", "ru", "zh-rCN", "zh-rTW", "ja",
+LANGS = ["ar", "fr", "es", "de", "pt", "it", "ru", "zh-rCN", "zh-rTW", "ja",
          "ko", "hi", "ur", "tr", "fa", "id", "ms", "th", "vi", "he",
          "nl", "pl", "uk", "bn"]
 SOURCE = Path("app/src/main/res/values/strings.xml")
@@ -23,8 +23,13 @@ def save_translations(lang: str, strings):
     out_dir = Path(f"app/src/main/res/values-{lang}")
     out_dir.mkdir(parents=True, exist_ok=True)
     root = ET.Element("resources")
+    existing = {}
+    old = out_dir / "strings.xml"
+    if old.exists():
+        old_root = ET.parse(old).getroot()
+        existing = {e.attrib['name']: e.text or '' for e in old_root.findall('string')}
     for key, value in strings:
-        ET.SubElement(root, "string", name=key).text = value
+        ET.SubElement(root, "string", name=key).text = existing.get(key, value)
     ET.indent(root, space="    ")
     ET.ElementTree(root).write(out_dir / "strings.xml", encoding="utf-8", xml_declaration=True)
 
