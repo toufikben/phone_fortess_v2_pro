@@ -22,6 +22,7 @@ import com.phonefortress.app.ui.theme.LocalThemeTokens
  * - تعرض glassmorphism إذا مُفعّل.
  * - تُطبّق الحدود والزوايا من الثيم.
  */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun ThemedCard(
     modifier: Modifier = Modifier,

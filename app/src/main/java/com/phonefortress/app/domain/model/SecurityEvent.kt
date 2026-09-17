@@ -23,11 +23,13 @@ data class SecurityEvent(
     val isTest: Boolean = false
 )
 
+@Serializable
 enum class SecurityEventStatus {
     PENDING, DEFERRED, IN_PROGRESS, CAPTURED,
     SEND_PENDING, SENT, FAILED_RETRYABLE, FAILED_FINAL, CANCELLED
 }
 
+@Serializable
 enum class ThreatLevel {
     LOW, MEDIUM, HIGH, CRITICAL;
 

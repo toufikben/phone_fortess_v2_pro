@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,7 +42,7 @@ import com.phonefortress.app.ui.viewmodel.ThemeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onThemePicker: () -> Unit, onPinSetup: () -> Unit, onNavigateToDiagnostics: () -> Unit, onNavigateToLanguage: () -> Unit, themeViewModel: ThemeViewModel = hiltViewModel()) {
+fun SettingsScreen(onBack: () -> Unit, onThemePicker: () -> Unit, onPinSetup: () -> Unit, onNavigateToDiagnostics: () -> Unit, onNavigateToLanguage: () -> Unit, onPaywall: () -> Unit = {}, themeViewModel: ThemeViewModel = hiltViewModel()) {
     val currentTheme by themeViewModel.selectedTheme.collectAsStateWithLifecycle()
     val tokens = LocalThemeTokens.current
     Scaffold(topBar = {
@@ -60,6 +61,7 @@ fun SettingsScreen(onBack: () -> Unit, onThemePicker: () -> Unit, onPinSetup: ()
             item { SettingsItem(Icons.Default.Lock, "قفل التطبيق (PIN)", "حماية الإعدادات والسجلات", onPinSetup) }
             item { Spacer(Modifier.padding(4.dp)) }
             item { SettingsSection("عن التطبيق") }
+            item { SettingsItem(Icons.Default.Star, "Phone Fortress Pro", "فتح جميع الميزات", onPaywall) }
             item { SettingsItem(Icons.Default.Info, "الإصدار", "2.0.0", {}) }
             item { SettingsItem(Icons.Default.Shield, "الإفصاح والخصوصية", "لا سحابة · لا جمع بيانات", {}) }
             item { SettingsItem(Icons.Default.BugReport, "تشخيص النظام", "عرض حالة العمال الخلفية", onNavigateToDiagnostics) }

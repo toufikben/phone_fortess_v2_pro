@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="icon_background">#0A0A0A</color>
+    <color name="ic_launcher_background">#0A0A0A</color>
+    <color name="ic_launcher_foreground_tint">#C9A227</color>
+    <color name="splash_background">#050505</color>
+    <color name="gold_primary">#C9A227</color>
+    <color name="gold_light">#F5D76E</color>
+    <color name="deep_black">#0A0A0A</color>
 </resources>
