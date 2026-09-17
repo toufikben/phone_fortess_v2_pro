@@ -33,6 +33,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.runtime.collectAsState
 import com.phonefortress.app.ui.theme.LocalThemeTokens
 import com.phonefortress.app.ui.viewmodel.PinViewModel
+import androidx.compose.ui.res.stringResource
+import com.phonefortress.app.R
 
 @Composable
 fun PinGateScreen(onSuccess: () -> Unit, viewModel: PinViewModel = hiltViewModel()) {
@@ -46,22 +48,23 @@ fun PinGateScreen(onSuccess: () -> Unit, viewModel: PinViewModel = hiltViewModel
     ) {
         Text("🔐", style = MaterialTheme.typography.displayLarge)
         Spacer(Modifier.height(16.dp))
-        Text("أدخل رمز الحماية", style = MaterialTheme.typography.titleLarge, color = tokens.textPrimary, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.pin_gate_title), style = MaterialTheme.typography.titleLarge, color = tokens.textPrimary, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(32.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             repeat(8) { index ->
+                val pinDescription = "${stringResource(R.string.pin_enter)} ${index + 1}"
                 Box(
                     Modifier
                         .size(16.dp)
                         .clip(CircleShape)
                         .background(if (index < state.pin.length) tokens.primary else tokens.textMuted.copy(alpha = 0.3f))
-                        .semantics { contentDescription = "خانة PIN ${index + 1}" }
+                        .semantics { contentDescription = pinDescription }
                 )
             }
         }
         Spacer(Modifier.height(16.dp))
         when {
-            state.lockoutRemaining > 0 -> Text("مقفل مؤقتاً · ${state.lockoutRemaining} ثانية", color = tokens.danger)
+            state.lockoutRemaining > 0 -> Text(stringResource(R.string.pin_lockout_remaining, state.lockoutRemaining), color = tokens.danger)
             state.errorMessage != null -> Text(state.errorMessage.orEmpty(), color = tokens.danger)
             else -> Spacer(Modifier.height(20.dp))
         }
@@ -98,7 +101,7 @@ private fun PinPad(enabled: Boolean, onDigit: (Char) -> Unit, onDelete: () -> Un
 
 @Composable
 private fun PinButton(label: String?, icon: androidx.compose.ui.graphics.vector.ImageVector?, onClick: () -> Unit, enabled: Boolean, primaryColor: androidx.compose.ui.graphics.Color, textColor: androidx.compose.ui.graphics.Color, surfaceColor: androidx.compose.ui.graphics.Color) {
-    val description = when (label) { null -> if (icon == Icons.Default.Backspace) "حذف آخر رقم" else "المصادقة بالبصمة"; else -> "رقم $label" }
+    val description = when (label) { null -> if (icon == Icons.Default.Backspace) stringResource(R.string.common_delete) else stringResource(R.string.security_biometric); else -> "${stringResource(R.string.pin_enter)} $label" }
     IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(72.dp)) {
         if (icon != null) Icon(icon, description, tint = if (enabled) primaryColor else textColor.copy(alpha = 0.4f))
         else Text(label.orEmpty(), style = MaterialTheme.typography.headlineMedium, color = if (enabled) textColor else textColor.copy(alpha = 0.4f))

@@ -55,6 +55,8 @@ import com.phonefortress.app.ui.viewmodel.HomeViewModel
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.phonefortress.app.R
 import com.phonefortress.app.platform.admin.MyDeviceAdminReceiver
 
 @Composable
@@ -135,17 +137,17 @@ fun HomeScreen(
             ) {
                 Icon(
                     imageVector = if (state.isProtectionActive) Icons.Default.Shield else Icons.Default.PlayArrow,
-                    contentDescription = if (state.isProtectionActive) "حالة الحماية مفعلة" else "حالة الحماية متوقفة"
+                    contentDescription = stringResource(if (state.isProtectionActive) R.string.protection_active else R.string.protection_inactive)
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = if (state.isProtectionActive) "إيقاف الحماية" else "تفعيل الحماية",
+                    text = stringResource(if (state.isProtectionActive) R.string.protection_disable else R.string.protection_enable),
                     fontWeight = FontWeight.Bold
                 )
             }
             Spacer(Modifier.height(24.dp))
             ThemedCard {
-                Text("✨ نظرة سريعة", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.home_quick_view), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(12.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                     StatCell("فتح", state.stats.attempts.toString())
@@ -158,7 +160,7 @@ fun HomeScreen(
             state.lastEvent?.let { event ->
                 ThemedCard {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("آخر حدث", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.home_last_event), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                         Text(state.lastEventTimeAgo, style = MaterialTheme.typography.labelSmall, color = tokens.textSecondary)
                     }
                     Spacer(Modifier.height(8.dp))
@@ -173,7 +175,7 @@ fun HomeScreen(
                         )
                     }
                     Spacer(Modifier.height(8.dp))
-                    TextButton(onClick = onNavigateToLogs) { Text("عرض التفاصيل →") }
+                    TextButton(onClick = onNavigateToLogs) { Text(stringResource(R.string.home_view_details)) }
                 }
             }
             Spacer(Modifier.height(12.dp))
@@ -187,15 +189,15 @@ fun HomeScreen(
     if (showDisableConfirmation) {
         AlertDialog(
             onDismissRequest = { showDisableConfirmation = false },
-            title = { Text("إيقاف الحماية؟") },
-            text = { Text("سيتم إيقاف مراقبة محاولات فتح القفل وإرسال التنبيهات حتى تعيد تفعيلها.") },
+            title = { Text(stringResource(R.string.protection_disable_confirm_title)) },
+            text = { Text(stringResource(R.string.protection_disable_confirm_body)) },
             confirmButton = {
                 TextButton(onClick = { showDisableConfirmation = false; viewModel.toggleProtection() }) {
-                    Text("إيقاف")
+                    Text(stringResource(R.string.protection_disable))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDisableConfirmation = false }) { Text("إلغاء") }
+                TextButton(onClick = { showDisableConfirmation = false }) { Text(stringResource(R.string.common_cancel)) }
             }
         )
     }
@@ -234,9 +236,10 @@ private fun SecurityEvent.color(tokens: ThemeTokens) = when (threatLevel) {
     ThreatLevel.CRITICAL -> tokens.critical
 }
 
-private fun protectionStatusText(state: com.phonefortress.app.ui.viewmodel.HomeState): String = when {
-    state.isProtectionActive -> "الحماية مفعلة وتعمل الآن"
-    !state.isDeviceAdminActive -> "يلزم تفعيل مسؤول الجهاز أولاً"
-    !state.requiredProtectionPermissionsGranted -> "يلزم منح أذونات الالتقاط المطلوبة"
-    else -> "الحماية متوقفة — اضغط لتفعيلها"
-}
+@Composable
+private fun protectionStatusText(state: com.phonefortress.app.ui.viewmodel.HomeState): String = stringResource(when {
+    state.isProtectionActive -> R.string.protection_enabled_status
+    !state.isDeviceAdminActive -> R.string.protection_admin_required
+    !state.requiredProtectionPermissionsGranted -> R.string.protection_permissions_required
+    else -> R.string.protection_disabled_status
+})

@@ -51,8 +51,8 @@ class MainActivity : AppCompatActivity() {
                     }
                     when (pinRequired) {
                         null -> Unit
-                        true -> if (!unlocked) PinGateScreen(onSuccess = { unlocked = true; scope.launch { sessionManager.markUnlocked() } }) else AppNavHost(navController, if (notificationEventId != null) Routes.LOGS else Routes.HOME)
-                        false -> AppNavHost(navController, if (notificationEventId != null) Routes.LOGS else Routes.HOME)
+                        true -> if (!unlocked) PinGateScreen(onSuccess = { unlocked = true; scope.launch { sessionManager.markUnlocked() } }) else AppNavHost(navController, notificationEventId?.let(Routes::eventDetails) ?: Routes.HOME)
+                        false -> AppNavHost(navController, notificationEventId?.let(Routes::eventDetails) ?: Routes.HOME)
                     }
                 }
             }

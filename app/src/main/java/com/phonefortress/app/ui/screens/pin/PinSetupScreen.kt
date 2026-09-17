@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.phonefortress.app.ui.viewmodel.PinSetupViewModel
+import androidx.compose.ui.res.stringResource
+import com.phonefortress.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,16 +39,16 @@ fun PinSetupScreen(onBack: () -> Unit, viewModel: PinSetupViewModel = hiltViewMo
     val error by viewModel.error.collectAsStateWithLifecycle()
     val saving by viewModel.saving.collectAsStateWithLifecycle()
     LaunchedEffect(saved) { if (saved) onBack() }
-    Scaffold(topBar = { TopAppBar(title = { Text("إعداد قفل التطبيق") }) }) { padding ->
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.pin_setup_title)) }) }) { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("أنشئ رمز PIN لحماية التطبيق والسجلات.")
-            OutlinedTextField(pin, { pin = it.filter(Char::isDigit).take(8) }, label = { Text("PIN جديد") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword), modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(confirmation, { confirmation = it.filter(Char::isDigit).take(8) }, label = { Text("تأكيد PIN") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword), modifier = Modifier.fillMaxWidth())
+            Text(stringResource(R.string.pin_setup_hint))
+            OutlinedTextField(pin, { pin = it.filter(Char::isDigit).take(8) }, label = { Text(stringResource(R.string.pin_new)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword), modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(confirmation, { confirmation = it.filter(Char::isDigit).take(8) }, label = { Text(stringResource(R.string.pin_confirm)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword), modifier = Modifier.fillMaxWidth())
             androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("السماح بفتح القفل بالبصمة")
+                Text(stringResource(R.string.security_biometric))
                 Switch(checked = biometric, onCheckedChange = { biometric = it })
             }
             error?.let { Text(it, color = androidx.compose.material3.MaterialTheme.colorScheme.error) }
@@ -56,7 +58,7 @@ fun PinSetupScreen(onBack: () -> Unit, viewModel: PinSetupViewModel = hiltViewMo
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (saving) CircularProgressIndicator()
-                else Text("حفظ PIN")
+                else Text(stringResource(R.string.pin_save))
             }
         }
     }

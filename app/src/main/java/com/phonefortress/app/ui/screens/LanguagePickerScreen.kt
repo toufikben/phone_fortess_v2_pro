@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.phonefortress.app.data.prefs.LanguageManager
 import com.phonefortress.app.ui.theme.LocalThemeTokens
+import androidx.compose.ui.res.stringResource
+import com.phonefortress.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -21,8 +23,8 @@ fun LanguagePickerScreen(onBack: () -> Unit) {
     var currentLang by remember { mutableStateOf(LanguageManager.SUPPORTED_LANGUAGES.first().first) }
     Scaffold(topBar = {
         TopAppBar(
-            title = { Text("اختر اللغة / Language") },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع") } }
+            title = { Text(stringResource(R.string.language_picker_title)) },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back)) } }
         )
     }) { padding ->
         LazyColumn(
@@ -38,7 +40,7 @@ fun LanguagePickerScreen(onBack: () -> Unit) {
                 ) {
                     Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(name, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium, color = tokens.textPrimary)
-                        if (code == currentLang) Icon(Icons.Default.CheckCircle, contentDescription = "محدد", tint = tokens.primary)
+                        if (code == currentLang) Icon(Icons.Default.CheckCircle, contentDescription = stringResource(R.string.common_selected), tint = tokens.primary)
                     }
                 }
             }

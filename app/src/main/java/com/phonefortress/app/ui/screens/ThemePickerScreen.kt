@@ -43,6 +43,8 @@ import com.phonefortress.app.domain.model.AppTheme
 import com.phonefortress.app.ui.theme.LocalThemeTokens
 import com.phonefortress.app.ui.theme.tokens.Themes
 import com.phonefortress.app.ui.viewmodel.ThemeViewModel
+import androidx.compose.ui.res.stringResource
+import com.phonefortress.app.R
 
 @Composable
 fun ThemePickerScreen(onBack: () -> Unit, viewModel: ThemeViewModel = hiltViewModel()) {
@@ -50,8 +52,8 @@ fun ThemePickerScreen(onBack: () -> Unit, viewModel: ThemeViewModel = hiltViewMo
     val tokens = LocalThemeTokens.current
     Scaffold(topBar = {
         TopAppBar(
-            title = { Text("الهوية البصرية") },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع") } }
+            title = { Text(stringResource(R.string.theme_picker_title)) },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back)) } }
         )
     }) { padding ->
         LazyColumn(
@@ -59,7 +61,7 @@ fun ThemePickerScreen(onBack: () -> Unit, viewModel: ThemeViewModel = hiltViewMo
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(vertical = 16.dp)
         ) {
-            item { Text("اختر الهوية التي تناسبك. التغيير فوري.", style = MaterialTheme.typography.bodyMedium, color = tokens.textSecondary) }
+            item { Text(stringResource(R.string.theme_picker_hint), style = MaterialTheme.typography.bodyMedium, color = tokens.textSecondary) }
             items(AppTheme.entries, key = { it.id }) { theme ->
                 ThemePreviewCard(theme, theme == current) { viewModel.setTheme(theme) }
             }
@@ -87,7 +89,7 @@ private fun ThemePreviewCard(theme: AppTheme, isSelected: Boolean, onSelect: () 
                     Text(theme.displayNameAr, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = themeTokens.textPrimary)
                     Text(theme.displayNameEn, style = MaterialTheme.typography.labelSmall, color = themeTokens.textSecondary)
                 }
-                if (isSelected) Icon(Icons.Default.CheckCircle, contentDescription = "محدد", tint = themeTokens.primary)
+                if (isSelected) Icon(Icons.Default.CheckCircle, contentDescription = stringResource(R.string.common_selected), tint = themeTokens.primary)
             }
             Spacer(Modifier.height(12.dp))
             Text(theme.descriptionAr, style = MaterialTheme.typography.bodySmall, color = themeTokens.textSecondary)

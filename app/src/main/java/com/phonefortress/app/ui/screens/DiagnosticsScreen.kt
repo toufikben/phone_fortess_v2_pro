@@ -27,6 +27,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.phonefortress.app.ui.theme.LocalThemeTokens
 import com.phonefortress.app.ui.viewmodel.DiagnosticsViewModel
+import androidx.compose.ui.res.stringResource
+import com.phonefortress.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,9 +40,9 @@ fun DiagnosticsScreen(
     val tokens = LocalThemeTokens.current
     Scaffold(topBar = {
         TopAppBar(
-            title = { Text("تشخيص النظام") },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع") } },
-            actions = { TextButton(onClick = viewModel::refresh) { Text("تحديث") } }
+            title = { Text(stringResource(R.string.diagnostics_title)) },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back)) } },
+            actions = { TextButton(onClick = viewModel::refresh) { Text(stringResource(R.string.common_retry)) } }
         )
     }) { padding ->
         LazyColumn(
@@ -48,13 +50,13 @@ fun DiagnosticsScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            item { InfoCard("عدد العمال النشطين", workers.count { it.state == WorkInfoState.RUNNING }.toString()) }
+            item { InfoCard(stringResource(R.string.diagnostics_workers), workers.count { it.state == WorkInfoState.RUNNING }.toString()) }
             items(workers, key = { it.id }) { worker ->
                 Card(colors = CardDefaults.cardColors(containerColor = tokens.surface)) {
                     Column(Modifier.padding(12.dp)) {
                         Text(worker.tag, style = MaterialTheme.typography.titleSmall, color = tokens.textPrimary)
-                        Text("الحالة: ${worker.state}", style = MaterialTheme.typography.bodySmall, color = tokens.textSecondary)
-                        Text("المحاولات: ${worker.runAttemptCount}", style = MaterialTheme.typography.bodySmall, color = tokens.textSecondary)
+                        Text(stringResource(R.string.diagnostics_status, worker.state), style = MaterialTheme.typography.bodySmall, color = tokens.textSecondary)
+                        Text(stringResource(R.string.diagnostics_attempts, worker.runAttemptCount), style = MaterialTheme.typography.bodySmall, color = tokens.textSecondary)
                     }
                 }
             }

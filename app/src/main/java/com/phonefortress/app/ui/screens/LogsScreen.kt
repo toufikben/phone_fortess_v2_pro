@@ -20,6 +20,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.phonefortress.app.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.phonefortress.app.ui.components.ThreatScoreCard
@@ -32,10 +34,10 @@ fun LogsScreen(onBack: () -> Unit, viewModel: LogsViewModel = hiltViewModel()) {
     val events by viewModel.events.collectAsStateWithLifecycle()
     val tokens = LocalThemeTokens.current
     Scaffold(topBar = {
-        TopAppBar(title = { Text("سجل الأحداث") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع") } })
+        TopAppBar(title = { Text(stringResource(R.string.logs_title)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back)) } })
     }) { padding ->
         if (events.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { Text("لا توجد أحداث بعد", color = tokens.textSecondary) }
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { Text(stringResource(R.string.logs_empty), color = tokens.textSecondary) }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),

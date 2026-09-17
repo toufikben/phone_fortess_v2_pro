@@ -13,6 +13,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.phonefortress.app.ui.viewmodel.AlertSettingsViewModel
+import androidx.compose.ui.res.stringResource
+import com.phonefortress.app.R
 
 /**
  * شاشة إدارة قنوات التنبيه.
@@ -28,10 +30,10 @@ fun AlertSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("قنوات التنبيه") },
+                title = { Text(stringResource(R.string.alert_channels_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 }
             )
@@ -127,7 +129,7 @@ private fun ChannelRow(
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (channel.configured) {
-                    TextButton(onClick = onTest) { Text("اختبار") }
+                    TextButton(onClick = onTest) { Text(stringResource(R.string.common_ok)) }
                 }
             }
         }

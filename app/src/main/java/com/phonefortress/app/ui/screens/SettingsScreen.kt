@@ -34,6 +34,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.phonefortress.app.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.phonefortress.app.ui.theme.LocalThemeTokens
@@ -45,24 +47,24 @@ fun SettingsScreen(onBack: () -> Unit, onThemePicker: () -> Unit, onPinSetup: ()
     val currentTheme by themeViewModel.selectedTheme.collectAsStateWithLifecycle()
     val tokens = LocalThemeTokens.current
     Scaffold(topBar = {
-        TopAppBar(title = { Text("الإعدادات") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع") } })
+        TopAppBar(title = { Text(stringResource(R.string.settings_title)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back)) } })
     }) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            item { SettingsSection("المظهر") }
-            item { SettingsItem(Icons.Default.Language, "اللغة", "اختيار لغة التطبيق", onNavigateToLanguage) }
-            item { SettingsItem(Icons.Default.Palette, "الهوية البصرية", "${currentTheme.emoji} ${currentTheme.displayNameAr}", onThemePicker) }
+            item { SettingsSection(stringResource(R.string.settings_about)) }
+            item { SettingsItem(Icons.Default.Language, stringResource(R.string.settings_language), stringResource(R.string.language_picker_hint), onNavigateToLanguage) }
+            item { SettingsItem(Icons.Default.Palette, stringResource(R.string.settings_theme), "${currentTheme.emoji} ${currentTheme.displayNameAr}", onThemePicker) }
             item { Spacer(Modifier.padding(4.dp)) }
-            item { SettingsSection("الأمان") }
-            item { SettingsItem(Icons.Default.Lock, "قفل التطبيق (PIN)", "حماية الإعدادات والسجلات", onPinSetup) }
+            item { SettingsSection(stringResource(R.string.settings_pin)) }
+            item { SettingsItem(Icons.Default.Lock, stringResource(R.string.settings_pin), stringResource(R.string.security_auto_lock), onPinSetup) }
             item { Spacer(Modifier.padding(4.dp)) }
-            item { SettingsSection("عن التطبيق") }
-            item { InformationalItem(Icons.Default.Info, "الإصدار", "2.0.0") }
-            item { InformationalItem(Icons.Default.Shield, "الإفصاح والخصوصية", "لا سحابة · لا جمع بيانات") }
-            item { SettingsItem(Icons.Default.BugReport, "تشخيص النظام", "عرض حالة العمال الخلفية", onNavigateToDiagnostics) }
+            item { SettingsSection(stringResource(R.string.settings_about)) }
+            item { InformationalItem(Icons.Default.Info, "2.0.0", "Phone Fortress") }
+            item { InformationalItem(Icons.Default.Shield, stringResource(R.string.settings_about), stringResource(R.string.channel_silent_desc)) }
+            item { SettingsItem(Icons.Default.BugReport, stringResource(R.string.settings_diagnostics), stringResource(R.string.diagnostics_workers), onNavigateToDiagnostics) }
         }
     }
 }
@@ -83,7 +85,7 @@ private fun SettingsItem(icon: ImageVector, title: String, subtitle: String, onC
                 Text(title, style = MaterialTheme.typography.titleMedium, color = tokens.textPrimary)
                 Text(subtitle, style = MaterialTheme.typography.bodySmall, color = tokens.textSecondary)
             }
-            Icon(Icons.Default.ChevronLeft, contentDescription = "فتح", tint = tokens.textMuted)
+            Icon(Icons.Default.ChevronLeft, contentDescription = stringResource(R.string.common_open), tint = tokens.textMuted)
         }
     }
 }

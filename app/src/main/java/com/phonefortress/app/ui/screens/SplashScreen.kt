@@ -18,6 +18,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.phonefortress.app.ui.theme.LocalThemeTokens
+import androidx.compose.ui.res.stringResource
+import com.phonefortress.app.R
 
 @Composable
 fun SplashScreen(onFinished: () -> Unit) {
@@ -34,9 +36,9 @@ fun SplashScreen(onFinished: () -> Unit) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text("🛡️", style = MaterialTheme.typography.displayLarge.copy(fontSize = 96.sp), modifier = Modifier.scale(scale))
             Spacer(Modifier.height(24.dp))
-            Text("PHONE FORTRESS", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black, letterSpacing = 6.sp), color = tokens.primary)
+            Text(stringResource(R.string.app_brand), style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black, letterSpacing = 6.sp), color = tokens.primary)
             Spacer(Modifier.height(8.dp))
-            Text("v2.0.0", style = MaterialTheme.typography.labelMedium, color = tokens.textSecondary)
+            Text(stringResource(R.string.app_version), style = MaterialTheme.typography.labelMedium, color = tokens.textSecondary)
         }
     }
 }

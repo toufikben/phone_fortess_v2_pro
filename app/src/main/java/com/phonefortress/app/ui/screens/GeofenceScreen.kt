@@ -18,6 +18,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.phonefortress.app.domain.model.SafeZone
 import com.phonefortress.app.domain.model.ZoneType
 import com.phonefortress.app.ui.viewmodel.GeofenceViewModel
+import androidx.compose.ui.res.stringResource
+import com.phonefortress.app.R
 
 /**
  * شاشة إدارة المناطق الجغرافية.
@@ -33,15 +35,15 @@ fun GeofenceScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("المناطق الذكية") },
+                title = { Text(stringResource(R.string.geofence_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.showAddDialog() }) {
-                        Icon(Icons.Default.Add, contentDescription = "إضافة")
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.geofence_add))
                     }
                 }
             )
@@ -172,7 +174,7 @@ private fun ZoneCard(
                     )
                 }
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = "حذف")
+                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.common_delete))
                 }
             }
             Switch(
@@ -194,20 +196,20 @@ private fun EmptyState(modifier: Modifier = Modifier, onAdd: () -> Unit) {
         Text(text = "📍", style = MaterialTheme.typography.displayLarge)
         Spacer(Modifier.height(16.dp))
         Text(
-            text = "لا توجد مناطق بعد",
+            text = stringResource(R.string.geofence_empty),
             style = MaterialTheme.typography.titleLarge
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "أضف منطقة آمنة (المنزل) أو منطقة خطر (المطار) لضبط الحساسية تلقائياً.",
+            text = stringResource(R.string.geofence_hint),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(24.dp))
         Button(onClick = onAdd) {
-            Icon(Icons.Default.Add, contentDescription = "إضافة منطقة")
+            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.geofence_add))
             Spacer(Modifier.width(8.dp))
-            Text("إضافة منطقة")
+            Text(stringResource(R.string.geofence_add))
         }
     }
 }
@@ -225,17 +227,17 @@ private fun AddZoneDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("منطقة جديدة") },
+        title = { Text(stringResource(R.string.geofence_add)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("الاسم") },
+                    label = { Text(stringResource(R.string.geofence_name)) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(8.dp))
-                Text("النوع:", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.geofence_type), style = MaterialTheme.typography.labelMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     ZoneType.entries.forEach { zt ->
                         FilterChip(
@@ -246,7 +248,7 @@ private fun AddZoneDialog(
                     }
                 }
                 Spacer(Modifier.height(8.dp))
-                Text("نصف القطر: ${radius.toInt()}م")
+                Text(stringResource(R.string.geofence_radius, radius.toInt()))
                 Slider(
                     value = radius,
                     onValueChange = { radius = it },
@@ -270,10 +272,10 @@ private fun AddZoneDialog(
                     }
                 },
                 enabled = name.isNotBlank() && currentLocation != null
-            ) { Text("إضافة") }
+            ) { Text(stringResource(R.string.geofence_add)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("إلغاء") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
         }
     )
 }

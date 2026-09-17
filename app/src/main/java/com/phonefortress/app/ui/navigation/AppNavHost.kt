@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.phonefortress.app.ui.screens.AlertSettingsScreen
 import com.phonefortress.app.ui.screens.DiagnosticsScreen
+import com.phonefortress.app.ui.screens.EventDetailsScreen
 import com.phonefortress.app.ui.screens.GeofenceScreen
 import com.phonefortress.app.ui.screens.HomeScreen
 import com.phonefortress.app.ui.screens.LogsScreen
@@ -24,6 +25,8 @@ object Routes {
     const val PIN_SETUP = "pin_setup"
     const val DIAGNOSTICS = "diagnostics"
     const val LANGUAGE_PICKER = "language_picker"
+    const val EVENT_DETAILS = "event/{eventId}"
+    fun eventDetails(eventId: String) = "event/${android.net.Uri.encode(eventId)}"
 }
 
 @Composable
@@ -38,6 +41,7 @@ fun AppNavHost(navController: NavHostController, startDestination: String = Rout
             )
         }
         composable(Routes.LOGS) { LogsScreen(onBack = { navController.popBackStack() }) }
+        composable(Routes.EVENT_DETAILS) { EventDetailsScreen(onBack = { navController.popBackStack() }) }
         composable(Routes.ZONES) { GeofenceScreen(onBack = { navController.popBackStack() }) }
         composable(Routes.CHANNELS) { AlertSettingsScreen(onBack = { navController.popBackStack() }) }
         composable(Routes.SETTINGS) {
