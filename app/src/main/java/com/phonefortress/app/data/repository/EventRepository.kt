@@ -61,5 +61,6 @@ class EventRepository @Inject constructor(private val dao: EventDao) {
 
     suspend fun deleteOlderThan(timestamp: Long) { dao.deleteOlderThan(timestamp) }
     suspend fun clearEvidencePathsBefore(timestamp: Long) { dao.clearEvidencePathsBefore(timestamp) }
+    suspend fun clearEvidencePaths(eventId: String) { dao.clearEvidencePaths(eventId) }
     suspend fun delete(eventId: String) { dao.deleteById(eventId) }
 }

@@ -73,6 +73,9 @@ interface EventDao {
     @Query("UPDATE security_events SET photoPath = NULL, audioPath = NULL WHERE timestamp < :before AND status IN ('SENT','FAILED_FINAL','CANCELLED')")
     suspend fun clearEvidencePathsBefore(before: Long)
 
+    @Query("UPDATE security_events SET photoPath = NULL, audioPath = NULL WHERE eventId = :eventId")
+    suspend fun clearEvidencePaths(eventId: String)
+
     @Query("DELETE FROM security_events WHERE eventId = :eventId")
     suspend fun deleteById(eventId: String)
 }

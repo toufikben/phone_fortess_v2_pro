@@ -76,7 +76,7 @@
         <!-- Boot Receiver -->
         <receiver
             android:name=".platform.receiver.BootReceiver"
-            android:exported="true"
+            android:exported="false"
             android:enabled="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

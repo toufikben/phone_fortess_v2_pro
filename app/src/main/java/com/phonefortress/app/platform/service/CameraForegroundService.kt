@@ -80,12 +80,13 @@ class CameraForegroundService : Service(), LifecycleOwner {
                 startForegroundWithNotification(photo, audio, location)
                 processEvent(eventId)
             } catch (e: Exception) {
-                Logger.e(e, "Event processing failed: $eventId")
+                Logger.e(e, "Event processing failed")
                 runCatching {
                     eventRepository.transition(eventId, SecurityEventStatus.FAILED_RETRYABLE, "capture-exception", EventOperation.CAPTURE)
                     WorkScheduler.scheduleCaptureRetry(applicationContext, eventId, 1)
                 }
             } finally {
+                cameraController.release()
                 activeEvents.remove(eventId)
                 releaseWakeLock()
                 if (activeEvents.isEmpty()) {
@@ -121,6 +122,7 @@ class CameraForegroundService : Service(), LifecycleOwner {
             return
         }
         photo?.let { event = event.copy(photoPath = it.absolutePath) }
+        if (event.photoPath != null) eventRepository.updateMetadata(event)
 
         val audioEnabled = securityPrefs.captureAudio.first()
         val audio = if (audioEnabled) {
@@ -134,13 +136,13 @@ class CameraForegroundService : Service(), LifecycleOwner {
             return
         }
         audio?.let { event = event.copy(audioPath = it.absolutePath) }
+        if (event.audioPath != null) eventRepository.updateMetadata(event)
         if (securityPrefs.captureLocation.first()) withTimeoutOrNull(Constants.LOCATION_TIMEOUT_MS + 2_000L) { locationProvider.getCurrentLocation() }?.let { event = event.copy(latitude = it.latitude, longitude = it.longitude, locationAccuracy = it.accuracy) }
         eventRepository.updateMetadata(event)
         event = eventRepository.transition(eventId, SecurityEventStatus.CAPTURED, "capture-complete", EventOperation.CAPTURE) ?: return
         eventRepository.updateMetadata(event)
         event = eventRepository.transition(eventId, SecurityEventStatus.SEND_PENDING, "dispatch-ready", EventOperation.SEND) ?: return
         WorkScheduler.dispatchEventNow(applicationContext, eventId)
-        cameraController.release()
     }
 
     private suspend fun markCaptureRetryable(eventId: String, reason: String) {

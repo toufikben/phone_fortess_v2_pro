@@ -27,13 +27,16 @@ object Logger {
         }
     }
 
-    fun d(message: String, vararg args: Any?) = Timber.d(sanitize(message), *args)
-    fun i(message: String, vararg args: Any?) = Timber.i(sanitize(message), *args)
-    fun w(message: String, vararg args: Any?) = Timber.w(sanitize(message), *args)
+    fun d(message: String, vararg args: Any?) = Timber.d(sanitize(message), *sanitizeArgs(args))
+    fun i(message: String, vararg args: Any?) = Timber.i(sanitize(message), *sanitizeArgs(args))
+    fun w(message: String, vararg args: Any?) = Timber.w(sanitize(message), *sanitizeArgs(args))
     fun e(t: Throwable? = null, message: String, vararg args: Any?) {
-        if (t != null) Timber.e(t, sanitize(message), *args)
-        else Timber.e(sanitize(message), *args)
+        if (t != null) Timber.e(t, sanitize(message), *sanitizeArgs(args))
+        else Timber.e(sanitize(message), *sanitizeArgs(args))
     }
+
+    private fun sanitizeArgs(args: Array<out Any?>): Array<out Any?> =
+        args.map { value -> if (value is String) sanitize(value) else value }.toTypedArray()
 
     private fun sanitize(message: String): String {
         var sanitized = message

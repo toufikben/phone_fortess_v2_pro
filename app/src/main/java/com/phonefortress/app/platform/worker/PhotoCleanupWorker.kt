@@ -24,17 +24,22 @@ class PhotoCleanupWorker @AssistedInject constructor(
         val retentionDays = securityPrefs.retentionDays.first()
         val cutoff = System.currentTimeMillis() - retentionDays * 24L * 60 * 60 * 1000
         val terminalEvents = eventRepository.getTerminalBefore(cutoff)
+        val evidenceRoot = File(applicationContext.filesDir, Constants.DIR_EVIDENCE).canonicalFile
         var deletedFiles = 0
+        var deletedEvents = 0
         terminalEvents.forEach { event ->
-            listOfNotNull(event.photoPath, event.audioPath).forEach { path ->
-                val file = File(path)
-                if (!file.exists() || file.delete()) deletedFiles++
+            val filesDeleted = listOfNotNull(event.photoPath, event.audioPath).all { path ->
+                val file = File(path).canonicalFile
+                if (!file.path.startsWith("${evidenceRoot.path}${File.separator}")) return@all false
+                if (!file.exists()) true else file.delete().also { if (it) deletedFiles++ }
+            }
+            if (filesDeleted) {
+                eventRepository.clearEvidencePaths(event.id)
+                eventRepository.delete(event.id)
+                deletedEvents++
             }
         }
-        // Paths are cleared only after each event is terminal and its files are gone.
-        eventRepository.clearEvidencePathsBefore(cutoff)
-        eventRepository.deleteOlderThan(cutoff)
-        Logger.i("PhotoCleanupWorker: removed $deletedFiles evidence files and ${terminalEvents.size} terminal events")
+        Logger.i("PhotoCleanupWorker: removed $deletedFiles evidence files and $deletedEvents terminal events")
         Result.success()
     } catch (e: Exception) {
         Logger.e(e, "PhotoCleanupWorker failed")
