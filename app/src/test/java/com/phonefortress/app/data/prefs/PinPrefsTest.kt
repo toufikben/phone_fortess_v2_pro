@@ -5,9 +5,10 @@ import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.phonefortress.app.data.crypto.PinHasher
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.Before
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -16,7 +17,10 @@ import org.robolectric.annotation.Config
 @Config(sdk = [28])
 class PinPrefsTest {
     private lateinit var prefs: PinPrefs
-    @BeforeEach fun setup() { prefs = PinPrefs(ApplicationProvider.getApplicationContext<Context>(), PinHasher()) }
+    @Before fun setup() {
+        prefs = PinPrefs(ApplicationProvider.getApplicationContext<Context>(), PinHasher())
+        runBlocking { prefs.disablePin() }
+    }
     @Test fun `initial state is disabled`() = runTest { assertThat(prefs.isPinEnabled.first()).isFalse() }
     @Test fun `set pin then verify succeeds`() = runTest { prefs.setPin("123456"); assertThat(prefs.isPinEnabled.first()).isTrue(); assertThat(prefs.verifyPin("123456")).isInstanceOf(PinPrefs.VerifyResult.Success::class.java) }
     @Test fun `wrong pin increments attempts`() = runTest { prefs.setPin("123456"); val r = prefs.verifyPin("000000"); assertThat(r).isInstanceOf(PinPrefs.VerifyResult.WrongPin::class.java); assertThat((r as PinPrefs.VerifyResult.WrongPin).remainingAttempts).isEqualTo(4) }

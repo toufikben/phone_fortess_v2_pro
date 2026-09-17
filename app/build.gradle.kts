@@ -168,6 +168,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.junit5.api)
     testRuntimeOnly(libs.junit5.engine)
+    testRuntimeOnly(libs.junit5.vintage)
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)
     testImplementation(libs.coroutines.test)
