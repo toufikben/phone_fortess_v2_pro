@@ -46,7 +46,7 @@ fun PinGateScreen(onSuccess: () -> Unit, viewModel: PinViewModel = hiltViewModel
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("🔐", style = MaterialTheme.typography.displayLarge)
+        Text(stringResource(R.string.pin_gate_lock_icon), style = MaterialTheme.typography.displayLarge)
         Spacer(Modifier.height(16.dp))
         Text(stringResource(R.string.pin_gate_title), style = MaterialTheme.typography.titleLarge, color = tokens.textPrimary, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(32.dp))

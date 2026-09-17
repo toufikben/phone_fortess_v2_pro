@@ -116,4 +116,11 @@
     <string name="app_version">v2.0.0</string>
     <string name="common_open">Open</string>
     <string name="common_add_zone">Add zone</string>
+    <string name="geofence_use_current_location">Use my current location</string>
+    <string name="geofence_location_selected">Location selected</string>
+    <string name="splash_shield_icon">🛡️</string>
+    <string name="pin_gate_lock_icon">🔐</string>
+    <string name="geofence_type_safe">Safe</string>
+    <string name="geofence_type_neutral">Neutral</string>
+    <string name="geofence_type_danger">Danger</string>
 </resources>

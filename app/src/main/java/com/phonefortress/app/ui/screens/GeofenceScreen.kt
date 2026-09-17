@@ -243,7 +243,7 @@ private fun AddZoneDialog(
                         FilterChip(
                             selected = type == zt,
                             onClick = { type = zt },
-                            label = { Text("${zt.emoji} ${zt.labelAr}") }
+                            label = { Text("${zt.emoji} " + stringResource(when (zt) { ZoneType.SAFE -> R.string.geofence_type_safe; ZoneType.NEUTRAL -> R.string.geofence_type_neutral; ZoneType.DANGER -> R.string.geofence_type_danger })) }
                         )
                     }
                 }
@@ -260,7 +260,7 @@ private fun AddZoneDialog(
                     onClick = useCurrentLocation,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(if (currentLocation == null) "استخدم موقعي الحالي" else "✓ تم تحديد الموقع")
+                    Text(if (currentLocation == null) stringResource(R.string.geofence_use_current_location) else "✓ " + stringResource(R.string.geofence_location_selected))
                 }
             }
         },

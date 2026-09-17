@@ -34,7 +34,7 @@ fun SplashScreen(onFinished: () -> Unit) {
     LaunchedEffect(Unit) { kotlinx.coroutines.delay(1500); onFinished() }
     Box(Modifier.fillMaxSize().background(tokens.background), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("🛡️", style = MaterialTheme.typography.displayLarge.copy(fontSize = 96.sp), modifier = Modifier.scale(scale))
+            Text(stringResource(R.string.splash_shield_icon), style = MaterialTheme.typography.displayLarge.copy(fontSize = 96.sp), modifier = Modifier.scale(scale))
             Spacer(Modifier.height(24.dp))
             Text(stringResource(R.string.app_brand), style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black, letterSpacing = 6.sp), color = tokens.primary)
             Spacer(Modifier.height(8.dp))

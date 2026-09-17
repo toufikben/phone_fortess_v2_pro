@@ -116,4 +116,11 @@
     <string name="app_version">v2.0.0</string>
     <string name="common_open">فتح</string>
     <string name="common_add_zone">إضافة منطقة</string>
+    <string name="geofence_use_current_location">استخدم موقعي الحالي</string>
+    <string name="geofence_location_selected">تم تحديد الموقع</string>
+    <string name="splash_shield_icon">🛡️</string>
+    <string name="pin_gate_lock_icon">🔐</string>
+    <string name="geofence_type_safe">آمنة</string>
+    <string name="geofence_type_neutral">محايدة</string>
+    <string name="geofence_type_danger">خطر</string>
 </resources>
