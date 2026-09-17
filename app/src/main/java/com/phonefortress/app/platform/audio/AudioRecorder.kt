@@ -38,6 +38,7 @@ class AudioRecorder @Inject constructor(
     suspend fun recordShort(outputDir: File, durationMs: Long = Constants.AUDIO_DURATION_MS): File? =
         withContext(Dispatchers.IO) {
             var outputFile: File? = null
+            val boundedDurationMs = durationMs.coerceIn(0L, Constants.AUDIO_DURATION_MS)
             try {
                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                     Logger.w("Microphone permission not granted")
@@ -70,7 +71,7 @@ class AudioRecorder @Inject constructor(
                 }
                 recorder = rec
 
-                delay(durationMs)
+                delay(boundedDurationMs)
 
                 stopAndRelease()
                 Logger.i("Audio saved: ${file.name}")

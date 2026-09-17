@@ -6,6 +6,7 @@ import com.phonefortress.app.domain.model.EventOperation
 import com.phonefortress.app.domain.model.SecurityEvent
 import com.phonefortress.app.domain.model.SecurityEventStatus
 import com.phonefortress.app.domain.state.SecurityEventStateMachine
+import com.phonefortress.app.util.Constants
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -33,10 +34,13 @@ class EventRepository @Inject constructor(private val dao: EventDao) {
     }
 
     suspend fun getById(eventId: String): SecurityEvent? = dao.getById(eventId)?.toDomain()
-    suspend fun getDispatchable(): List<SecurityEvent> = dao.getDispatchable().map { it.toDomain() }
-    suspend fun getActive(): List<SecurityEvent> = dao.getActive().map { it.toDomain() }
+    suspend fun getDispatchable(limit: Int = Constants.MAX_EVENT_BATCH_SIZE): List<SecurityEvent> =
+        dao.getDispatchable(limit.coerceIn(1, Constants.MAX_EVENT_BATCH_SIZE)).map { it.toDomain() }
+    suspend fun getActive(limit: Int = Constants.MAX_EVENT_BATCH_SIZE): List<SecurityEvent> =
+        dao.getActive(limit.coerceIn(1, Constants.MAX_EVENT_BATCH_SIZE)).map { it.toDomain() }
     suspend fun getStaleInProgress(before: Long): List<SecurityEvent> = dao.getStaleInProgress(before).map { it.toDomain() }
-    suspend fun getTerminalBefore(timestamp: Long): List<SecurityEvent> = dao.getTerminalBefore(timestamp).map { it.toDomain() }
+    suspend fun getTerminalBefore(timestamp: Long, limit: Int = Constants.MAX_EVENT_BATCH_SIZE): List<SecurityEvent> =
+        dao.getTerminalBefore(timestamp, limit.coerceIn(1, Constants.MAX_EVENT_BATCH_SIZE)).map { it.toDomain() }
     suspend fun claimForSend(eventId: String, now: Long = System.currentTimeMillis()): Boolean =
         dao.claimSend(eventId, now, now - SEND_CLAIM_LEASE_MS) == 1
     fun observeRecent(limit: Int = 50): Flow<List<SecurityEvent>> = dao.observeRecent(limit).map { list -> list.map { it.toDomain() } }

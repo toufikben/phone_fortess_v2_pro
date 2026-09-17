@@ -67,9 +67,11 @@ class FaceDetector @Inject constructor(
             val bitmap = BitmapFactory.decodeFile(imagePath)
                 ?: return@withContext null
 
-            val result = detectBitmap(bitmap)
-            bitmap.recycle()
-            result
+            try {
+                detectBitmap(bitmap)
+            } finally {
+                if (!bitmap.isRecycled) bitmap.recycle()
+            }
         } catch (e: Exception) {
             Logger.e(e, "Face detection failed")
             null
@@ -156,25 +158,28 @@ class FaceDetector @Inject constructor(
             val h = bitmap.height
             val stepX = (w / 30).coerceAtLeast(1)
             val stepY = (h / 30).coerceAtLeast(1)
-            var total = 0L
-            var count = 0
+            try {
+                var total = 0L
+                var count = 0
 
-            var y = 0
-            while (y < h) {
-                var x = 0
-                while (x < w) {
-                    val p = bitmap.getPixel(x, y)
-                    val r = (p shr 16) and 0xFF
-                    val g = (p shr 8) and 0xFF
-                    val b = p and 0xFF
-                    total += (r + g + b) / 3
-                    count++
-                    x += stepX
+                var y = 0
+                while (y < h) {
+                    var x = 0
+                    while (x < w) {
+                        val p = bitmap.getPixel(x, y)
+                        val r = (p shr 16) and 0xFF
+                        val g = (p shr 8) and 0xFF
+                        val b = p and 0xFF
+                        total += (r + g + b) / 3
+                        count++
+                        x += stepX
+                    }
+                    y += stepY
                 }
-                y += stepY
+                if (count > 0) (total.toFloat() / count) / 255f else -1f
+            } finally {
+                if (!bitmap.isRecycled) bitmap.recycle()
             }
-            bitmap.recycle()
-            if (count > 0) (total.toFloat() / count) / 255f else -1f
         } catch (_: Exception) {
             Logger.w("Brightness check failed")
             -1f

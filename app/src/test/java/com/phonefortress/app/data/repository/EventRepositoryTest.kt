@@ -5,6 +5,7 @@ import com.phonefortress.app.data.local.dao.EventDao
 import com.phonefortress.app.data.local.entity.SecurityEventEntity
 import com.phonefortress.app.domain.model.SecurityEvent
 import com.phonefortress.app.domain.model.SecurityEventStatus
+import com.phonefortress.app.util.Constants
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -57,6 +58,10 @@ class EventRepositoryTest {
         assertThat(repo.claimForSend("evt-1", 1_000L)).isTrue()
         coVerify { dao.claimSend("evt-1", 1_000L, any()) }
     }
-    @Test fun `active events are mapped`() = runTest { coEvery { dao.getActive() } returns emptyList(); assertThat(repo.getActive()).isEmpty() }
+    @Test fun `active events are mapped with bounded limit`() = runTest {
+        coEvery { dao.getActive(Constants.MAX_EVENT_BATCH_SIZE) } returns emptyList()
+        assertThat(repo.getActive()).isEmpty()
+        coVerify { dao.getActive(Constants.MAX_EVENT_BATCH_SIZE) }
+    }
     @Test fun `observe recent maps empty flow`() = runTest { every { dao.observeRecent(50) } returns flowOf(emptyList()); assertThat(repo.observeRecent().first()).isEmpty() }
 }

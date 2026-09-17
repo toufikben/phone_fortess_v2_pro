@@ -36,6 +36,7 @@ object Constants {
     const val MAX_LOCATION_AGE_MS = 60_000L
     const val MAX_LOCATION_ACCURACY_METERS = 100f
     const val AUDIO_DURATION_MS = 10_000L
+    const val MAX_EVENT_BATCH_SIZE = 100
 
     // Thresholds
     const val MIN_THRESHOLD = 1

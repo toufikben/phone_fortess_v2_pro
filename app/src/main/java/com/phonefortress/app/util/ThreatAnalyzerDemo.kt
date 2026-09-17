@@ -1,7 +1,6 @@
 package com.phonefortress.app.util
 
 import com.phonefortress.app.domain.usecase.EvaluateThreatUseCase
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 /**
@@ -11,7 +10,7 @@ import javax.inject.Inject
 class ThreatAnalyzerDemo @Inject constructor(
     private val evaluateThreatUseCase: EvaluateThreatUseCase
 ) {
-    fun runDemo(photoPath: String?) = runBlocking {
+    suspend fun runDemo(photoPath: String?) {
         val result = evaluateThreatUseCase(
             photoPath = photoPath,
             attempts = 5,
@@ -19,6 +18,6 @@ class ThreatAnalyzerDemo @Inject constructor(
             isTest = true
         )
         Logger.i("DEMO: threat evaluation completed")
-        result
+        return result
     }
 }

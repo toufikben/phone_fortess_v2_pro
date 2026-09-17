@@ -80,7 +80,7 @@ class CameraController @Inject constructor(
                     object : ImageCapture.OnImageSavedCallback {
                         override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                             Logger.i("Photo saved: ${file.name}")
-                            if (cont.isActive) cont.resume(file)
+                            if (cont.isActive) cont.resume(file) else file.delete()
                         }
 
                         override fun onError(exception: ImageCaptureException) {
@@ -104,6 +104,7 @@ class CameraController @Inject constructor(
     private suspend fun getCameraProvider(): ProcessCameraProvider? =
         suspendCancellableCoroutine { cont ->
             val future = ProcessCameraProvider.getInstance(context)
+            cont.invokeOnCancellation { future.cancel(true) }
             future.addListener({
                 try {
                     val provider = future.get()

@@ -15,6 +15,7 @@ import com.phonefortress.app.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 import javax.inject.Inject
 
 data class HomeState(
@@ -130,7 +132,7 @@ class HomeViewModel @Inject constructor(
 
     private fun startUptimeTicker() {
         viewModelScope.launch {
-            while (true) {
+            while (currentCoroutineContext().isActive) {
                 if (protectionStartedAt > 0) {
                     val elapsed = System.currentTimeMillis() - protectionStartedAt
                     _state.update { it.copy(uptimeText = formatUptime(elapsed)) }
