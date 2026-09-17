@@ -4,18 +4,23 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.Test
 
 class ProtectionStatePolicyTest {
-    @Test fun `requested protection is inactive when Device Admin is inactive`() {
-        assertThat(ProtectionStatePolicy.isActive(requested = true, deviceAdminActive = false)).isFalse()
-        assertThat(ProtectionStatePolicy.canEnable(deviceAdminActive = false)).isFalse()
+    @Test fun `inactive admin cannot enable protection`() {
+        assertThat(ProtectionStatePolicy.isActive(true, false, true)).isFalse()
+        assertThat(ProtectionStatePolicy.canEnable(false, true)).isFalse()
     }
 
-    @Test fun `requested protection is active only after Device Admin activation`() {
-        assertThat(ProtectionStatePolicy.isActive(requested = true, deviceAdminActive = true)).isTrue()
-        assertThat(ProtectionStatePolicy.canEnable(deviceAdminActive = true)).isTrue()
+    @Test fun `missing permissions cannot enable protection`() {
+        assertThat(ProtectionStatePolicy.isActive(true, true, false)).isFalse()
+        assertThat(ProtectionStatePolicy.canEnable(true, false)).isFalse()
+    }
+
+    @Test fun `admin and all permissions enable protection`() {
+        assertThat(ProtectionStatePolicy.isActive(true, true, true)).isTrue()
+        assertThat(ProtectionStatePolicy.canEnable(true, true)).isTrue()
     }
 
     @Test fun `activation cancellation cannot enable protection`() {
-        assertThat(ProtectionStatePolicy.canEnable(deviceAdminActive = false)).isFalse()
-        assertThat(ProtectionStatePolicy.isActive(requested = false, deviceAdminActive = false)).isFalse()
+        assertThat(ProtectionStatePolicy.canEnable(false, false)).isFalse()
+        assertThat(ProtectionStatePolicy.isActive(false, false, false)).isFalse()
     }
 }

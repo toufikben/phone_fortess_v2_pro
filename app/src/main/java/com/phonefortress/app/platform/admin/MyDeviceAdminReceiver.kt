@@ -35,12 +35,10 @@ class MyDeviceAdminReceiver : DeviceAdminReceiver() {
                 if (!securityPrefs.protectionEnabled.first() || !isAdminActive(context)) return@launch
                 val configuredThreshold = securityPrefs.threshold.first()
                 val effectiveThreshold = zoneState.effectiveThreshold(configuredThreshold)
-                val triggeringAttempts = securityPrefs.incrementAttemptsAndCheckThreshold(effectiveThreshold)
-                val currentAttempts = securityPrefs.consecutiveAttempts.first()
-                Logger.d("Attempt $currentAttempts / threshold $effectiveThreshold")
-                if (triggeringAttempts != null) {
-                    captureUseCase.start(triggeringAttempts, isTest = false)
-                    securityPrefs.resetAttempts()
+                val evaluation = securityPrefs.incrementAttemptsAndCheckThreshold(effectiveThreshold)
+                Logger.d("Attempt ${evaluation.newAttemptCount} / threshold $effectiveThreshold")
+                if (evaluation.thresholdReached) {
+                    captureUseCase.start(evaluation.newAttemptCount, isTest = false)
                 }
             } catch (e: Exception) {
                 Logger.e(e, "Password failed handling error")

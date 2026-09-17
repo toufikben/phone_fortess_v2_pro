@@ -21,14 +21,12 @@ class HandleFailedAttemptUseCase @Inject constructor(
         return try {
             val configuredThreshold = securityPrefs.threshold.first()
             val threshold = zoneState.effectiveThreshold(configuredThreshold)
-            val triggeringAttempts = securityPrefs.incrementAttemptsAndCheckThreshold(threshold)
-            val attempts = securityPrefs.consecutiveAttempts.first()
+            val evaluation = securityPrefs.incrementAttemptsAndCheckThreshold(threshold)
 
-            Logger.i("Attempt $attempts / $threshold (test=$isTest)")
+            Logger.i("Attempt ${evaluation.newAttemptCount} / $threshold (test=$isTest)")
 
-            if (triggeringAttempts != null) {
-                captureUseCase.start(attempts, isTest)
-                securityPrefs.resetAttempts()
+            if (evaluation.thresholdReached) {
+                captureUseCase.start(evaluation.newAttemptCount, isTest)
                 true
             } else false
         } catch (e: Exception) {

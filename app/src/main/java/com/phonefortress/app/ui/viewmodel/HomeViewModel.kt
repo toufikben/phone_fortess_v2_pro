@@ -3,8 +3,10 @@ package com.phonefortress.app.ui.viewmodel
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.pm.PackageManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.core.content.ContextCompat
 import com.phonefortress.app.alerts.AlertDispatcher
 import com.phonefortress.app.data.prefs.SecurityPrefs
 import com.phonefortress.app.data.repository.EventRepository
@@ -30,7 +32,8 @@ data class HomeState(
     val stats: HomeStats = HomeStats(),
     val lastEvent: SecurityEvent? = null,
     val lastEventTimeAgo: String = "",
-    val requiredProtectionPermissions: List<String> = emptyList()
+    val requiredProtectionPermissions: List<String> = emptyList(),
+    val requiredProtectionPermissionsGranted: Boolean = false
 )
 
 data class HomeStats(
@@ -66,12 +69,13 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             securityPrefs.protectionEnabled.collect { active ->
                 val adminActive = isDeviceAdminActive()
+                val permissionsGranted = areRequiredPermissionsGranted()
                 if (active && protectionStartedAt == 0L) {
                     protectionStartedAt = System.currentTimeMillis()
                 } else if (!active) {
                     protectionStartedAt = 0
                 }
-                _state.update { it.copy(isProtectionActive = ProtectionStatePolicy.isActive(active, adminActive), isDeviceAdminActive = adminActive) }
+                _state.update { it.copy(isProtectionActive = ProtectionStatePolicy.isActive(active, adminActive, permissionsGranted), isDeviceAdminActive = adminActive, requiredProtectionPermissionsGranted = permissionsGranted) }
             }
         }
     }
@@ -97,9 +101,10 @@ class HomeViewModel @Inject constructor(
     private fun observeCapturePermissions() {
         viewModelScope.launch {
             combine(securityPrefs.capturePhoto, securityPrefs.captureAudio, securityPrefs.captureLocation) { photo, audio, location ->
-                ProtectionPermissions.required(photo, audio, location).toList()
+                val permissions = ProtectionPermissions.required(photo, audio, location).toList()
+                permissions to permissions.all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
             }.collect { permissions ->
-                _state.update { it.copy(requiredProtectionPermissions = permissions) }
+                _state.update { it.copy(requiredProtectionPermissions = permissions.first, requiredProtectionPermissionsGranted = permissions.second) }
             }
         }
     }
@@ -140,7 +145,7 @@ class HomeViewModel @Inject constructor(
     fun toggleProtection() {
         viewModelScope.launch {
             val current = securityPrefs.protectionEnabled.first()
-            if (!current && !isDeviceAdminActive()) return@launch
+            if (!current && !ProtectionStatePolicy.canEnable(isDeviceAdminActive(), areRequiredPermissionsGranted())) return@launch
             securityPrefs.setProtectionEnabled(!current)
         }
     }
@@ -149,18 +154,28 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             val requested = securityPrefs.protectionEnabled.first()
             val adminActive = isDeviceAdminActive()
-            _state.update { it.copy(isProtectionActive = ProtectionStatePolicy.isActive(requested, adminActive), isDeviceAdminActive = adminActive) }
+            val permissionsGranted = areRequiredPermissionsGranted()
+            _state.update { it.copy(isProtectionActive = ProtectionStatePolicy.isActive(requested, adminActive, permissionsGranted), isDeviceAdminActive = adminActive, requiredProtectionPermissionsGranted = permissionsGranted) }
         }
     }
 
     fun enableProtectionIfReady() {
         viewModelScope.launch {
-            if (ProtectionStatePolicy.canEnable(isDeviceAdminActive())) securityPrefs.setProtectionEnabled(true)
+            if (ProtectionStatePolicy.canEnable(isDeviceAdminActive(), areRequiredPermissionsGranted())) securityPrefs.setProtectionEnabled(true)
             refreshProtectionState()
         }
     }
 
     fun isDeviceAdminActiveNow(): Boolean = isDeviceAdminActive()
+
+    private suspend fun areRequiredPermissionsGranted(): Boolean {
+        val permissions = ProtectionPermissions.required(
+            securityPrefs.capturePhoto.first(),
+            securityPrefs.captureAudio.first(),
+            securityPrefs.captureLocation.first()
+        )
+        return permissions.all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
+    }
 
     private fun isDeviceAdminActive(): Boolean {
         val manager = context.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager

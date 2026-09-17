@@ -27,6 +27,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -36,6 +37,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import com.phonefortress.app.domain.model.SecurityEvent
 import com.phonefortress.app.domain.model.ThreatLevel
 import com.phonefortress.app.ui.components.common.ProtectionHero
@@ -60,6 +64,7 @@ fun HomeScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val tokens = LocalThemeTokens.current
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
         if (result.values.all { it }) viewModel.enableProtectionIfReady() else viewModel.refreshProtectionState()
     }
@@ -70,6 +75,13 @@ fun HomeScreen(
         } else viewModel.refreshProtectionState()
     }
     LaunchedEffect(Unit) { viewModel.refreshProtectionState() }
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshProtectionState()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     ThemedBackground {
         Column(
