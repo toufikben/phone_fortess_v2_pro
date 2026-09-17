@@ -70,16 +70,16 @@
     <string name="pro_subtitle">Débloquez toutes les fonctionnalités</string>
     <string name="pro_subscribe">"S'abonner"</string>
     <string name="pro_restore">Restaurer les achats</string>
-    <string name="pro_manage">Gérer l'abonnement</string>
+    <string name="pro_manage">"Gérer l'abonnement"</string>
 
     <!-- Alerts -->
-    <string name="alert_channels_title">Canaux d'alerte</string>
+    <string name="alert_channels_title">"Canaux d'alerte"</string>
     <string name="alert_test_success">✓ Envoyé avec succès</string>
-    <string name="alert_test_failed">❌ Échec de l'envoi</string>
+    <string name="alert_test_failed">"❌ Échec de l'envoi"</string>
     <string name="alert_not_configured">⚠ Non configuré</string>
 
     <!-- Logs -->
-    <string name="logs_title">Journal d'événements</string>
+    <string name="logs_title">"Journal d'événements"</string>
     <string name="logs_empty">Aucun événement</string>
     <string name="logs_export">Exporter</string>
     <string name="logs_filter">Filtrer</string>

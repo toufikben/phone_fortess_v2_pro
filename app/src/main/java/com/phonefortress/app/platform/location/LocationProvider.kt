@@ -7,7 +7,6 @@ import android.location.Location
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import com.phonefortress.app.util.Constants
 import com.phonefortress.app.util.Logger
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -45,7 +44,7 @@ class LocationProvider @Inject constructor(
         try {
             // 1. حاول آخر موقع معروف
             val last = tryGetLastLocation()
-            if (last != null && isRecent(last)) {
+            if (last != null) {
                 return@withContext last
             }
 
@@ -79,12 +78,7 @@ class LocationProvider @Inject constructor(
     private suspend fun requestSingleUpdate(): LocationResult? =
         suspendCancellableCoroutine { cont ->
             try {
-                val request = com.google.android.gms.location.CurrentLocationRequest.Builder(
-                    Priority.PRIORITY_HIGH_ACCURACY,
-                    Constants.LOCATION_TIMEOUT_MS
-                ).build()
-
-                client.getCurrentLocation(request, null)
+                client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                     .addOnSuccessListener { loc ->
                         if (cont.isActive) cont.resume(loc?.toResult())
                     }

@@ -138,6 +138,7 @@ dependencies {
 
     // Location
     implementation(libs.play.services.location)
+    implementation(libs.coroutines.play.services)
     implementation(libs.play.services.maps)
     implementation(libs.maps.compose)
 

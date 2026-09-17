@@ -38,7 +38,12 @@ class AntiTamperDetector @Inject constructor(@ApplicationContext private val con
         val paths = listOf("/system/app/Superuser.apk", "/sbin/su", "/system/bin/su", "/system/xbin/su", "/data/local/xbin/su", "/data/local/bin/su", "/su/bin/su", "/magisk/.core/bin/su")
         if (paths.any { java.io.File(it).exists() }) return true
         return try {
-            Runtime.getRuntime().exec(arrayOf("/system/xbin/which", "su")).use { it.inputStream.bufferedReader().readText().isNotEmpty() }
+            val process = Runtime.getRuntime().exec(arrayOf("/system/xbin/which", "su"))
+            try {
+                process.inputStream.bufferedReader().readText().isNotEmpty()
+            } finally {
+                process.destroy()
+            }
         } catch (_: Exception) { false }
     }
 

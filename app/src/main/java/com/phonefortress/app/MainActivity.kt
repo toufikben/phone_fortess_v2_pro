@@ -10,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -22,6 +23,7 @@ import com.phonefortress.app.ui.theme.AppThemeProvider
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -38,6 +40,7 @@ class MainActivity : AppCompatActivity() {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     var pinRequired by remember { mutableStateOf<Boolean?>(null) }
                     var unlocked by remember { mutableStateOf(false) }
+                    val scope = rememberCoroutineScope()
                     val navController = rememberNavController()
                     LaunchedEffect(Unit) {
                         pinRequired = sessionManager.shouldRequireUnlock()
@@ -46,7 +49,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     when (pinRequired) {
                         null -> Unit
-                        true -> if (!unlocked) PinGateScreen { unlocked = true; sessionManager.markUnlocked() } else AppNavHost(navController)
+                        true -> if (!unlocked) PinGateScreen(onSuccess = { unlocked = true; scope.launch { sessionManager.markUnlocked() } }) else AppNavHost(navController)
                         false -> AppNavHost(navController)
                     }
                 }

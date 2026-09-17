@@ -25,12 +25,13 @@ tensorflowLiteSupport = "0.4.4"
 mediapipe = "0.10.14"
 mapsCompose = "6.2.1"
 playServicesMaps = "19.0.0"
-playServicesLocation = "21.4.0"
+playServicesLocation = "21.3.0"
 junit = "4.13.2"
 junit5 = "5.11.0"
 mockk = "1.13.13"
 turbine = "1.2.0"
 coroutinesTest = "1.9.0"
+coroutines = "1.9.0"
 androidxTest = "1.6.1"
 espresso = "3.6.1"
 truth = "1.4.4"
@@ -122,6 +123,7 @@ mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
+coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
 androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTest" }
 androidx-test-espresso = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
 truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }

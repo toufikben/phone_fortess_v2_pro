@@ -1,8 +1,8 @@
 package com.phonefortress.app.data.crypto
 
-import android.util.Base64
 import com.phonefortress.app.util.Logger
 import java.security.SecureRandom
+import java.util.Base64
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 import javax.inject.Inject
@@ -23,14 +23,14 @@ class PinHasher @Inject constructor() {
         val saltBytes = ByteArray(SALT_LENGTH).also { SecureRandom().nextBytes(it) }
         val hashBytes = pbkdf2(pin, saltBytes)
         return HashedPin(
-            hash = Base64.encodeToString(hashBytes, Base64.NO_WRAP),
-            salt = Base64.encodeToString(saltBytes, Base64.NO_WRAP)
+            hash = Base64.getEncoder().withoutPadding().encodeToString(hashBytes),
+            salt = Base64.getEncoder().withoutPadding().encodeToString(saltBytes)
         )
     }
 
     fun verify(pin: String, hashedPin: HashedPin): Boolean = try {
-        val saltBytes = Base64.decode(hashedPin.salt, Base64.NO_WRAP)
-        val expectedHash = Base64.decode(hashedPin.hash, Base64.NO_WRAP)
+        val saltBytes = Base64.getDecoder().decode(hashedPin.salt)
+        val expectedHash = Base64.getDecoder().decode(hashedPin.hash)
         constantTimeEquals(expectedHash, pbkdf2(pin, saltBytes))
     } catch (e: Exception) {
         Logger.e(e, "PIN verify error")
