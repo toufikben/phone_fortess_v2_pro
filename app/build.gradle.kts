@@ -98,6 +98,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.fragment)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.core.splashscreen)
 
     // Compose
     implementation(platform(libs.androidx.compose.bom))
@@ -125,6 +127,7 @@ dependencies {
 
     // WorkManager
     implementation(libs.work.runtime)
+    implementation(libs.billing.ktx)
 
     // CameraX
     implementation(libs.camera.core)

@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="app_name">Phone Fortress</string>
-
     <string name="channel_protection_name">Protection Status</string>
     <string name="channel_protection_desc">Shows that protection is active</string>
     <string name="channel_alerts_name">Security Alerts</string>

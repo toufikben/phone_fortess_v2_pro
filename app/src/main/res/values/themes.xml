@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.PhoneFortress" parent="android:style/Theme.Material.NoActionBar">
+    <style name="Theme.PhoneFortress" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:fontFamily">sans</item>
         <item name="android:colorAccent">#C9A227</item>
         <item name="android:statusBarColor">#0A0A0A</item>
         <item name="android:navigationBarColor">#0A0A0A</item>
         <item name="android:windowBackground">#0A0A0A</item>
         <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="Theme.PhoneFortress.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#050505</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_shield_splash</item>
+        <item name="windowSplashScreenAnimationDuration">800</item>
+        <item name="postSplashScreenTheme">@style/Theme.PhoneFortress</item>
     </style>
 </resources>

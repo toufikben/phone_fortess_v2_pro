@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Card
@@ -40,7 +41,7 @@ import com.phonefortress.app.ui.viewmodel.ThemeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onThemePicker: () -> Unit, onPinSetup: () -> Unit, onNavigateToDiagnostics: () -> Unit, themeViewModel: ThemeViewModel = hiltViewModel()) {
+fun SettingsScreen(onBack: () -> Unit, onThemePicker: () -> Unit, onPinSetup: () -> Unit, onNavigateToDiagnostics: () -> Unit, onNavigateToLanguage: () -> Unit, themeViewModel: ThemeViewModel = hiltViewModel()) {
     val currentTheme by themeViewModel.selectedTheme.collectAsStateWithLifecycle()
     val tokens = LocalThemeTokens.current
     Scaffold(topBar = {
@@ -52,6 +53,7 @@ fun SettingsScreen(onBack: () -> Unit, onThemePicker: () -> Unit, onPinSetup: ()
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             item { SettingsSection("المظهر") }
+            item { SettingsItem(Icons.Default.Language, "اللغة", "اختيار لغة التطبيق", onNavigateToLanguage) }
             item { SettingsItem(Icons.Default.Palette, "الهوية البصرية", "${currentTheme.emoji} ${currentTheme.displayNameAr}", onThemePicker) }
             item { Spacer(Modifier.padding(4.dp)) }
             item { SettingsSection("الأمان") }

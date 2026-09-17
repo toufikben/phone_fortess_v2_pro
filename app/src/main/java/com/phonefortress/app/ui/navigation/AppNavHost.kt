@@ -9,6 +9,7 @@ import com.phonefortress.app.ui.screens.DiagnosticsScreen
 import com.phonefortress.app.ui.screens.GeofenceScreen
 import com.phonefortress.app.ui.screens.HomeScreen
 import com.phonefortress.app.ui.screens.LogsScreen
+import com.phonefortress.app.ui.screens.LanguagePickerScreen
 import com.phonefortress.app.ui.screens.PinSetupScreen
 import com.phonefortress.app.ui.screens.SettingsScreen
 import com.phonefortress.app.ui.screens.ThemePickerScreen
@@ -22,6 +23,7 @@ object Routes {
     const val THEME_PICKER = "theme_picker"
     const val PIN_SETUP = "pin_setup"
     const val DIAGNOSTICS = "diagnostics"
+    const val LANGUAGE_PICKER = "language_picker"
 }
 
 @Composable
@@ -43,11 +45,13 @@ fun AppNavHost(navController: NavHostController) {
                 onBack = { navController.popBackStack() },
                 onThemePicker = { navController.navigate(Routes.THEME_PICKER) },
                 onPinSetup = { navController.navigate(Routes.PIN_SETUP) },
-                onNavigateToDiagnostics = { navController.navigate(Routes.DIAGNOSTICS) }
+                onNavigateToDiagnostics = { navController.navigate(Routes.DIAGNOSTICS) },
+                onNavigateToLanguage = { navController.navigate(Routes.LANGUAGE_PICKER) }
             )
         }
         composable(Routes.THEME_PICKER) { ThemePickerScreen(onBack = { navController.popBackStack() }) }
         composable(Routes.PIN_SETUP) { PinSetupScreen(onBack = { navController.popBackStack() }) }
         composable(Routes.DIAGNOSTICS) { DiagnosticsScreen(onBack = { navController.popBackStack() }) }
+        composable(Routes.LANGUAGE_PICKER) { LanguagePickerScreen(onBack = { navController.popBackStack() }) }
     }
 }
