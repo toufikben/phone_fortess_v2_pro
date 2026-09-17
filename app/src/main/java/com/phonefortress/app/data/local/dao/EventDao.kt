@@ -9,9 +9,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface EventDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsert(event: SecurityEventEntity)
-
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(event: SecurityEventEntity)
 
