@@ -66,10 +66,6 @@ class AlertSettingsViewModel @Inject constructor(
         }
     }
 
-    fun openConfig(id: String) {
-        // TODO: navigation to config screen per channel
-    }
-
     fun testChannel(id: String) {
         viewModelScope.launch {
             val status = _state.value.channels.firstOrNull { it.id == id } ?: return@launch

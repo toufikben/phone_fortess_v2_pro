@@ -31,22 +31,22 @@ fun AppNavHost(navController: NavHostController) {
     NavHost(navController = navController, startDestination = Routes.HOME) {
         composable(Routes.HOME) {
             HomeScreen(
-                onNavigateToLogs = { navController.navigate(Routes.LOGS) },
-                onNavigateToZones = { navController.navigate(Routes.ZONES) },
-                onNavigateToChannels = { navController.navigate(Routes.CHANNELS) },
-                onNavigateToSettings = { navController.navigate(Routes.SETTINGS) }
+                onNavigateToLogs = { navController.navigate(Routes.LOGS) { launchSingleTop = true } },
+                onNavigateToZones = { navController.navigate(Routes.ZONES) { launchSingleTop = true } },
+                onNavigateToChannels = { navController.navigate(Routes.CHANNELS) { launchSingleTop = true } },
+                onNavigateToSettings = { navController.navigate(Routes.SETTINGS) { launchSingleTop = true } }
             )
         }
         composable(Routes.LOGS) { LogsScreen(onBack = { navController.popBackStack() }) }
-        composable(Routes.ZONES) { GeofenceScreen() }
-        composable(Routes.CHANNELS) { AlertSettingsScreen() }
+        composable(Routes.ZONES) { GeofenceScreen(onBack = { navController.popBackStack() }) }
+        composable(Routes.CHANNELS) { AlertSettingsScreen(onBack = { navController.popBackStack() }) }
         composable(Routes.SETTINGS) {
             SettingsScreen(
                 onBack = { navController.popBackStack() },
-                onThemePicker = { navController.navigate(Routes.THEME_PICKER) },
-                onPinSetup = { navController.navigate(Routes.PIN_SETUP) },
-                onNavigateToDiagnostics = { navController.navigate(Routes.DIAGNOSTICS) },
-                onNavigateToLanguage = { navController.navigate(Routes.LANGUAGE_PICKER) }
+                onThemePicker = { navController.navigate(Routes.THEME_PICKER) { launchSingleTop = true } },
+                onPinSetup = { navController.navigate(Routes.PIN_SETUP) { launchSingleTop = true } },
+                onNavigateToDiagnostics = { navController.navigate(Routes.DIAGNOSTICS) { launchSingleTop = true } },
+                onNavigateToLanguage = { navController.navigate(Routes.LANGUAGE_PICKER) { launchSingleTop = true } }
             )
         }
         composable(Routes.THEME_PICKER) { ThemePickerScreen(onBack = { navController.popBackStack() }) }

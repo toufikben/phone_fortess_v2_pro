@@ -102,6 +102,12 @@ fun HomeScreen(
             )
             Spacer(Modifier.height(24.dp))
             ProtectionHero(state.isProtectionActive, state.uptimeText)
+            Text(
+                text = protectionStatusText(state),
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (state.isProtectionActive) tokens.safe else tokens.warning,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
             Spacer(Modifier.height(16.dp))
             FilledTonalButton(
                     onClick = {
@@ -124,7 +130,7 @@ fun HomeScreen(
             ) {
                 Icon(
                     imageVector = if (state.isProtectionActive) Icons.Default.Shield else Icons.Default.PlayArrow,
-                    contentDescription = null
+                    contentDescription = if (state.isProtectionActive) "حالة الحماية مفعلة" else "حالة الحماية متوقفة"
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
@@ -206,4 +212,11 @@ private fun SecurityEvent.color(tokens: ThemeTokens) = when (threatLevel) {
     ThreatLevel.MEDIUM -> tokens.warning
     ThreatLevel.HIGH -> tokens.danger
     ThreatLevel.CRITICAL -> tokens.critical
+}
+
+private fun protectionStatusText(state: com.phonefortress.app.ui.viewmodel.HomeState): String = when {
+    state.isProtectionActive -> "الحماية مفعلة وتعمل الآن"
+    !state.isDeviceAdminActive -> "يلزم تفعيل مسؤول الجهاز أولاً"
+    !state.requiredProtectionPermissionsGranted -> "يلزم منح أذونات الالتقاط المطلوبة"
+    else -> "الحماية متوقفة — اضغط لتفعيلها"
 }

@@ -19,7 +19,6 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,7 +41,7 @@ import com.phonefortress.app.ui.viewmodel.ThemeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onThemePicker: () -> Unit, onPinSetup: () -> Unit, onNavigateToDiagnostics: () -> Unit, onNavigateToLanguage: () -> Unit, onPaywall: () -> Unit = {}, themeViewModel: ThemeViewModel = hiltViewModel()) {
+fun SettingsScreen(onBack: () -> Unit, onThemePicker: () -> Unit, onPinSetup: () -> Unit, onNavigateToDiagnostics: () -> Unit, onNavigateToLanguage: () -> Unit, themeViewModel: ThemeViewModel = hiltViewModel()) {
     val currentTheme by themeViewModel.selectedTheme.collectAsStateWithLifecycle()
     val tokens = LocalThemeTokens.current
     Scaffold(topBar = {
@@ -61,9 +60,8 @@ fun SettingsScreen(onBack: () -> Unit, onThemePicker: () -> Unit, onPinSetup: ()
             item { SettingsItem(Icons.Default.Lock, "قفل التطبيق (PIN)", "حماية الإعدادات والسجلات", onPinSetup) }
             item { Spacer(Modifier.padding(4.dp)) }
             item { SettingsSection("عن التطبيق") }
-            item { SettingsItem(Icons.Default.Star, "Phone Fortress Pro", "فتح جميع الميزات", onPaywall) }
-            item { SettingsItem(Icons.Default.Info, "الإصدار", "2.0.0", {}) }
-            item { SettingsItem(Icons.Default.Shield, "الإفصاح والخصوصية", "لا سحابة · لا جمع بيانات", {}) }
+            item { InformationalItem(Icons.Default.Info, "الإصدار", "2.0.0") }
+            item { InformationalItem(Icons.Default.Shield, "الإفصاح والخصوصية", "لا سحابة · لا جمع بيانات") }
             item { SettingsItem(Icons.Default.BugReport, "تشخيص النظام", "عرض حالة العمال الخلفية", onNavigateToDiagnostics) }
         }
     }
@@ -79,13 +77,28 @@ private fun SettingsItem(icon: ImageVector, title: String, subtitle: String, onC
     val tokens = LocalThemeTokens.current
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = tokens.surface)) {
         Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, null, tint = tokens.primary)
+            Icon(icon, contentDescription = title, tint = tokens.primary)
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
                 Text(title, style = MaterialTheme.typography.titleMedium, color = tokens.textPrimary)
                 Text(subtitle, style = MaterialTheme.typography.bodySmall, color = tokens.textSecondary)
             }
-            Icon(Icons.Default.ChevronLeft, null, tint = tokens.textMuted)
+            Icon(Icons.Default.ChevronLeft, contentDescription = "فتح", tint = tokens.textMuted)
+        }
+    }
+}
+
+@Composable
+private fun InformationalItem(icon: ImageVector, title: String, subtitle: String) {
+    val tokens = LocalThemeTokens.current
+    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = tokens.surface)) {
+        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, contentDescription = title, tint = tokens.primary)
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, color = tokens.textPrimary)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = tokens.textSecondary)
+            }
         }
     }
 }

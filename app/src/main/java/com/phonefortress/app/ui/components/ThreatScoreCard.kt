@@ -12,6 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.phonefortress.app.domain.model.SecurityEvent
 import com.phonefortress.app.domain.model.ThreatLevel
+import com.phonefortress.app.domain.model.SecurityEventStatus
 
 /**
  * بطاقة عرض درجة التهديد — تُستخدم في سجل الأحداث.
@@ -70,6 +71,13 @@ fun ThreatScoreCard(
                     )
                 }
             }
+
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = "الحالة: ${statusLabel(event.status)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -108,4 +116,16 @@ private fun levelName(level: ThreatLevel) = when (level) {
     ThreatLevel.MEDIUM -> "متوسط"
     ThreatLevel.HIGH -> "مرتفع"
     ThreatLevel.CRITICAL -> "حرج"
+}
+
+private fun statusLabel(status: SecurityEventStatus) = when (status) {
+    SecurityEventStatus.PENDING -> "في الانتظار"
+    SecurityEventStatus.DEFERRED -> "مؤجل"
+    SecurityEventStatus.IN_PROGRESS -> "قيد المعالجة"
+    SecurityEventStatus.CAPTURED -> "تم الالتقاط"
+    SecurityEventStatus.SEND_PENDING -> "بانتظار الإرسال"
+    SecurityEventStatus.SENT -> "تم الإرسال"
+    SecurityEventStatus.FAILED_RETRYABLE -> "فشل مؤقت — ستتم المحاولة مجدداً"
+    SecurityEventStatus.FAILED_FINAL -> "فشل نهائي"
+    SecurityEventStatus.CANCELLED -> "أُلغي"
 }

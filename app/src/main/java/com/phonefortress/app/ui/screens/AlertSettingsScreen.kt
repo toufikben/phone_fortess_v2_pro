@@ -3,6 +3,8 @@ package com.phonefortress.app.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,16 +20,28 @@ import com.phonefortress.app.ui.viewmodel.AlertSettingsViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlertSettingsScreen(
+    onBack: () -> Unit,
     viewModel: AlertSettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("قنوات التنبيه") })
+            TopAppBar(
+                title = { Text("قنوات التنبيه") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع")
+                    }
+                }
+            )
         }
     ) { padding ->
-        LazyColumn(
+        if (state.loading) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
@@ -47,7 +61,6 @@ fun AlertSettingsScreen(
                 ChannelRow(
                     channel = channel,
                     onToggle = { viewModel.toggleChannel(channel.id, it) },
-                    onConfigure = { viewModel.openConfig(channel.id) },
                     onTest = { viewModel.testChannel(channel.id) }
                 )
             }
@@ -77,7 +90,6 @@ fun AlertSettingsScreen(
 private fun ChannelRow(
     channel: ChannelUiModel,
     onToggle: (Boolean) -> Unit,
-    onConfigure: () -> Unit,
     onTest: () -> Unit
 ) {
     Card {
@@ -114,9 +126,6 @@ private fun ChannelRow(
             }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (channel.requiresConfig) {
-                    OutlinedButton(onClick = onConfigure) { Text("إعداد") }
-                }
                 if (channel.configured) {
                     TextButton(onClick = onTest) { Text("اختبار") }
                 }

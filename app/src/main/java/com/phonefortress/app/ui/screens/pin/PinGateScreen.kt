@@ -24,6 +24,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -48,7 +50,13 @@ fun PinGateScreen(onSuccess: () -> Unit, viewModel: PinViewModel = hiltViewModel
         Spacer(Modifier.height(32.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             repeat(8) { index ->
-                Box(Modifier.size(16.dp).clip(CircleShape).background(if (index < state.pin.length) tokens.primary else tokens.textMuted.copy(alpha = 0.3f)))
+                Box(
+                    Modifier
+                        .size(16.dp)
+                        .clip(CircleShape)
+                        .background(if (index < state.pin.length) tokens.primary else tokens.textMuted.copy(alpha = 0.3f))
+                        .semantics { contentDescription = "خانة PIN ${index + 1}" }
+                )
             }
         }
         Spacer(Modifier.height(16.dp))
@@ -90,8 +98,9 @@ private fun PinPad(enabled: Boolean, onDigit: (Char) -> Unit, onDelete: () -> Un
 
 @Composable
 private fun PinButton(label: String?, icon: androidx.compose.ui.graphics.vector.ImageVector?, onClick: () -> Unit, enabled: Boolean, primaryColor: androidx.compose.ui.graphics.Color, textColor: androidx.compose.ui.graphics.Color, surfaceColor: androidx.compose.ui.graphics.Color) {
+    val description = when (label) { null -> if (icon == Icons.Default.Backspace) "حذف آخر رقم" else "المصادقة بالبصمة"; else -> "رقم $label" }
     IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(72.dp)) {
-        if (icon != null) Icon(icon, null, tint = if (enabled) primaryColor else textColor.copy(alpha = 0.4f))
+        if (icon != null) Icon(icon, description, tint = if (enabled) primaryColor else textColor.copy(alpha = 0.4f))
         else Text(label.orEmpty(), style = MaterialTheme.typography.headlineMedium, color = if (enabled) textColor else textColor.copy(alpha = 0.4f))
     }
 }

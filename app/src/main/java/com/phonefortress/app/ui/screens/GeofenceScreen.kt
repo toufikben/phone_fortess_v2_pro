@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
@@ -24,6 +25,7 @@ import com.phonefortress.app.ui.viewmodel.GeofenceViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GeofenceScreen(
+    onBack: () -> Unit,
     viewModel: GeofenceViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -32,6 +34,11 @@ fun GeofenceScreen(
         topBar = {
             TopAppBar(
                 title = { Text("المناطق الذكية") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع")
+                    }
+                },
                 actions = {
                     IconButton(onClick = { viewModel.showAddDialog() }) {
                         Icon(Icons.Default.Add, contentDescription = "إضافة")
