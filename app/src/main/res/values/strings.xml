@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Phone Fortress</string>
+
+    <string name="channel_protection_name">Protection Status</string>
+    <string name="channel_protection_desc">Shows that protection is active</string>
+    <string name="channel_alerts_name">Security Alerts</string>
+    <string name="channel_alerts_desc">Intruder alerts and evidence</string>
+    <string name="channel_silent_name">Silent Operations</string>
+    <string name="channel_silent_desc">Silent background operations</string>
+    <string name="capturing_evidence_title">Capturing evidence…</string>
+    <string name="capturing_evidence_body">Phone Fortress is collecting evidence</string>
+    <string name="protection_active">Protection is active</string>
+    <string name="protection_inactive">Protection is off</string>
+    <string name="threat_score_title">Threat Score</string>
+    <string name="threat_reasons">Reasons</string>
+    <string name="threat_level_low">Low</string>
+    <string name="threat_level_medium">Medium</string>
+    <string name="threat_level_high">High</string>
+    <string name="threat_level_critical">Critical</string>
+    <string name="geofence_title">Smart Zones</string>
+    <string name="geofence_add">Add Zone</string>
+    <string name="geofence_empty">No zones yet</string>
+</resources>

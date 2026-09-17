@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">حصن الهاتف</string>
+
+    <string name="channel_protection_name">حالة الحماية</string>
+    <string name="channel_protection_desc">يظهر أن الحماية نشطة</string>
+    <string name="channel_alerts_name">تنبيهات أمنية</string>
+    <string name="channel_alerts_desc">تنبيهات المتطفلين والأدلة</string>
+    <string name="channel_silent_name">عمليات صامتة</string>
+    <string name="channel_silent_desc">عمليات خلفية صامتة</string>
+    <string name="capturing_evidence_title">جارٍ التقاط الأدلة…</string>
+    <string name="capturing_evidence_body">حصن الهاتف يجمع الأدلة</string>
+    <string name="protection_active">الحماية نشطة</string>
+    <string name="protection_inactive">الحماية متوقفة</string>
+    <string name="threat_score_title">درجة الخطر</string>
+    <string name="threat_reasons">الأسباب</string>
+    <string name="threat_level_low">منخفض</string>
+    <string name="threat_level_medium">متوسط</string>
+    <string name="threat_level_high">مرتفع</string>
+    <string name="threat_level_critical">حرج</string>
+    <string name="geofence_title">المناطق الذكية</string>
+    <string name="geofence_add">إضافة منطقة</string>
+    <string name="geofence_empty">لا توجد مناطق بعد</string>
+</resources>
