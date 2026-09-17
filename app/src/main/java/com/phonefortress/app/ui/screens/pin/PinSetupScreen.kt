@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -34,6 +35,7 @@ fun PinSetupScreen(onBack: () -> Unit, viewModel: PinSetupViewModel = hiltViewMo
     var biometric by remember { mutableStateOf(true) }
     val saved by viewModel.saved.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
+    val saving by viewModel.saving.collectAsStateWithLifecycle()
     LaunchedEffect(saved) { if (saved) onBack() }
     Scaffold(topBar = { TopAppBar(title = { Text("إعداد قفل التطبيق") }) }) { padding ->
         Column(
@@ -48,7 +50,14 @@ fun PinSetupScreen(onBack: () -> Unit, viewModel: PinSetupViewModel = hiltViewMo
                 Switch(checked = biometric, onCheckedChange = { biometric = it })
             }
             error?.let { Text(it, color = androidx.compose.material3.MaterialTheme.colorScheme.error) }
-            Button(onClick = { viewModel.save(pin, confirmation, biometric) }, modifier = Modifier.fillMaxWidth()) { Text("حفظ PIN") }
+            Button(
+                onClick = { viewModel.save(pin, confirmation, biometric) },
+                enabled = !saving,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (saving) CircularProgressIndicator()
+                else Text("حفظ PIN")
+            }
         }
     }
 }

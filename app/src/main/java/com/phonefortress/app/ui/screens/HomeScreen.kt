@@ -26,10 +26,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -65,6 +69,7 @@ fun HomeScreen(
     val tokens = LocalThemeTokens.current
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    var showDisableConfirmation by remember { mutableStateOf(false) }
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
         if (result.values.all { it }) viewModel.enableProtectionIfReady() else viewModel.refreshProtectionState()
     }
@@ -120,7 +125,7 @@ fun HomeScreen(
                         } else if (!state.isProtectionActive) {
                             if (state.requiredProtectionPermissions.isEmpty()) viewModel.enableProtectionIfReady()
                             else permissionLauncher.launch(state.requiredProtectionPermissions.toTypedArray())
-                        } else viewModel.toggleProtection()
+                        } else showDisableConfirmation = true
                     },
                 modifier = Modifier.fillMaxWidth(0.7f).height(52.dp),
                 colors = ButtonDefaults.filledTonalButtonColors(
@@ -178,6 +183,21 @@ fun HomeScreen(
                 QuickAction("⚙️", "الإعدادات", onNavigateToSettings, Modifier.weight(1f))
             }
         }
+    }
+    if (showDisableConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDisableConfirmation = false },
+            title = { Text("إيقاف الحماية؟") },
+            text = { Text("سيتم إيقاف مراقبة محاولات فتح القفل وإرسال التنبيهات حتى تعيد تفعيلها.") },
+            confirmButton = {
+                TextButton(onClick = { showDisableConfirmation = false; viewModel.toggleProtection() }) {
+                    Text("إيقاف")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDisableConfirmation = false }) { Text("إلغاء") }
+            }
+        )
     }
 }
 

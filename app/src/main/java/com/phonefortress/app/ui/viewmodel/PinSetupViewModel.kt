@@ -16,16 +16,26 @@ class PinSetupViewModel @Inject constructor(private val pinPrefs: PinPrefs) : Vi
     val saved: StateFlow<Boolean> = _saved.asStateFlow()
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+    private val _saving = MutableStateFlow(false)
+    val saving: StateFlow<Boolean> = _saving.asStateFlow()
 
     fun save(pin: String, confirmation: String, biometric: Boolean) {
+        if (_saving.value) return
         when {
             pin.length !in 4..8 -> _error.value = "يجب أن يتكون PIN من 4 إلى 8 أرقام"
             pin != confirmation -> _error.value = "رموز PIN غير متطابقة"
             else -> viewModelScope.launch {
-                pinPrefs.setPin(pin)
-                pinPrefs.setBiometricEnabled(biometric)
-                _error.value = null
-                _saved.value = true
+                _saving.value = true
+                runCatching {
+                    pinPrefs.setPin(pin)
+                    pinPrefs.setBiometricEnabled(biometric)
+                }.onSuccess {
+                    _error.value = null
+                    _saved.value = true
+                }.onFailure {
+                    _error.value = "تعذر حفظ PIN. حاول مرة أخرى."
+                }
+                _saving.value = false
             }
         }
     }

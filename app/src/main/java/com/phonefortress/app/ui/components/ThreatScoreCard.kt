@@ -13,6 +13,8 @@ import androidx.compose.ui.unit.dp
 import com.phonefortress.app.domain.model.SecurityEvent
 import com.phonefortress.app.domain.model.ThreatLevel
 import com.phonefortress.app.domain.model.SecurityEventStatus
+import java.text.DateFormat
+import java.util.Date
 
 /**
  * بطاقة عرض درجة التهديد — تُستخدم في سجل الأحداث.
@@ -75,6 +77,11 @@ fun ThreatScoreCard(
             Spacer(Modifier.height(12.dp))
             Text(
                 text = "الحالة: ${statusLabel(event.status)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = "الوقت: ${DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(event.timestamp))}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
