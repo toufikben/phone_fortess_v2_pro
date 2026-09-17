@@ -6,9 +6,14 @@ import android.app.NotificationManager
 import android.os.Build
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.phonefortress.app.platform.worker.WorkScheduler
 import com.phonefortress.app.util.Constants
 import com.phonefortress.app.util.Logger
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -23,11 +28,13 @@ class PhoneFortressApp : Application(), Configuration.Provider {
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onCreate() {
         super.onCreate()
         Logger.init(isDebug = BuildConfig.DEBUG)
         createNotificationChannels()
+        scheduleInitialWork()
     }
 
     override val workManagerConfiguration: Configuration
@@ -69,5 +76,13 @@ class PhoneFortressApp : Application(), Configuration.Provider {
         )
 
         manager.createNotificationChannels(channels)
+    }
+
+    private fun scheduleInitialWork() {
+        appScope.launch {
+            WorkScheduler.schedulePhotoCleanup(this@PhoneFortressApp)
+            WorkScheduler.schedulePeriodicDispatcher(this@PhoneFortressApp)
+            WorkScheduler.scheduleEventDispatcher(this@PhoneFortressApp)
+        }
     }
 }

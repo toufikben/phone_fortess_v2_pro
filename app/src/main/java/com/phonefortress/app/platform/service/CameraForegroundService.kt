@@ -25,6 +25,7 @@ import com.phonefortress.app.geofence.ZoneStateHolder
 import com.phonefortress.app.platform.audio.AudioRecorder
 import com.phonefortress.app.platform.camera.CameraController
 import com.phonefortress.app.platform.location.LocationProvider
+import com.phonefortress.app.platform.worker.WorkScheduler
 import com.phonefortress.app.util.Constants
 import com.phonefortress.app.util.Logger
 import dagger.hilt.android.AndroidEntryPoint
@@ -221,6 +222,9 @@ class CameraForegroundService : Service(), LifecycleOwner {
 
         event = SecurityEventStateMachine.transition(event, finalStatus)
         eventRepository.save(event)
+        if (finalStatus == SecurityEventStatus.FAILED_RETRYABLE) {
+            WorkScheduler.scheduleCaptureRetry(applicationContext, eventId)
+        }
         Logger.i("Event $eventId finished with status $finalStatus")
     }
 
