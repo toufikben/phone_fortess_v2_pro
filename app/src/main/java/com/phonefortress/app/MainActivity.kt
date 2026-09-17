@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
@@ -30,12 +31,14 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     @Inject lateinit var sessionManager: SessionManager
+    private val notificationEventIdState = mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        notificationEventIdState.value = intent?.getStringExtra(EVENT_ID_EXTRA)
         setContent {
             AppThemeProvider {
                 Surface(modifier = Modifier.fillMaxSize()) {
@@ -43,7 +46,7 @@ class MainActivity : AppCompatActivity() {
                     var unlocked by remember { mutableStateOf(false) }
                     val scope = rememberCoroutineScope()
                     val navController = rememberNavController()
-                    val notificationEventId = remember { intent?.getStringExtra("phone_fortress_event_id") }
+                    val notificationEventId = notificationEventIdState.value
                     LaunchedEffect(Unit) {
                         pinRequired = sessionManager.shouldRequireUnlock()
                         delay(400)
@@ -51,11 +54,21 @@ class MainActivity : AppCompatActivity() {
                     }
                     when (pinRequired) {
                         null -> Unit
-                        true -> if (!unlocked) PinGateScreen(onSuccess = { unlocked = true; scope.launch { sessionManager.markUnlocked() } }) else AppNavHost(navController, notificationEventId?.let(Routes::eventDetails) ?: Routes.HOME)
-                        false -> AppNavHost(navController, notificationEventId?.let(Routes::eventDetails) ?: Routes.HOME)
+                        true -> if (!unlocked) PinGateScreen(onSuccess = { unlocked = true; scope.launch { sessionManager.markUnlocked() } }) else key(notificationEventId) { AppNavHost(navController, notificationEventId?.let(Routes::eventDetails) ?: Routes.HOME) }
+                        false -> key(notificationEventId) { AppNavHost(navController, notificationEventId?.let(Routes::eventDetails) ?: Routes.HOME) }
                     }
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        notificationEventIdState.value = intent?.getStringExtra(EVENT_ID_EXTRA)
+    }
+
+    private companion object {
+        const val EVENT_ID_EXTRA = "phone_fortress_event_id"
     }
 }

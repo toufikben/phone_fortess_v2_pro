@@ -51,6 +51,9 @@ jobs:
       - name: Verify reliability configuration
         run: python3 tools/verify_reliability_configuration.py
 
+      - name: Verify Compose UI quality
+        run: python3 tools/verify_ui_quality.py
+
       - name: Build and test all release variants
         run: ./gradlew clean testDebugUnitTest assembleDebug assembleDebugAndroidTest assembleRelease bundleRelease --no-daemon --stacktrace
 
