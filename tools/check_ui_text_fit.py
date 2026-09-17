@@ -7,7 +7,7 @@ ROOT = Path(__file__).parents[1]
 RES = ROOT / "app/src/main/res"
 TARGETS = {
     "values-fr": {"pin_setup_title": 32, "pin_save": 16},
-    "values-de": {"geofence_hint": 80, "permission_denied": 80},
+    "values-de": {"geofence_hint": 80},
     "values-pl": {"protection_disable_confirm_body": 100},
     "values-es": {"protection_disable_confirm_body": 90, "protection_disabled_status": 60},
     "values-it": {"geofence_hint": 95, "protection_disable_confirm_body": 90},

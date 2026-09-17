@@ -13,10 +13,10 @@ NEW_KEYS = {
     "event_status_pending", "event_status_deferred", "event_status_in_progress", "event_status_captured",
     "event_status_send_pending", "event_status_sent", "event_status_failed_retryable", "event_status_failed_final",
     "event_status_cancelled", "event_operation_capture", "event_operation_send", "common_selected",
-    "permission_denied", "geofence_name", "geofence_type", "geofence_radius", "diagnostics_status",
+    "geofence_name", "geofence_type", "geofence_radius", "diagnostics_status",
     "diagnostics_attempts", "geofence_hint", "pin_setup_title", "pin_setup_hint", "pin_new",
     "pin_confirm", "pin_save", "pin_gate_title", "pin_lockout_remaining", "app_brand", "app_version",
-    "common_open", "common_add_zone",
+    "common_open",
 }
 
 def load(path):

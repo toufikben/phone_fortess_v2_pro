@@ -8,16 +8,13 @@ TARGETS = {
     "fr": {
         "pin_setup_title": "Verrouillage de l’application",
         "geofence_hint": "Ajoutez une zone sûre ou à risque pour régler la sensibilité.",
-        "permission_denied": "Autorisation refusée. Réessayez dans les Réglages si besoin.",
         "pin_setup_hint": "Créez un PIN pour protéger l’application et ses événements.",
         "protection_disable_confirm_body": "La surveillance et les alertes s’arrêteront jusqu’à réactivation.",
         "pin_save": "Enregistrer",
-        "common_add_zone": "Ajouter",
         "event_operation_capture": "Capturer",
     },
     "de": {
         "geofence_hint": "Füge eine sichere oder Gefahrenzone hinzu, um die Empfindlichkeit anzupassen.",
-        "permission_denied": "Berechtigung verweigert. Bei Bedarf in den Einstellungen erneut aktivieren.",
         "protection_disable_confirm_body": "Überwachung und Warnungen pausieren, bis der Schutz wieder aktiv ist.",
         "event_status_failed_retryable": "Temporärer Fehler — erneuter Versuch folgt",
         "protection_admin_required": "Geräteadministrator erforderlich",
@@ -36,7 +33,6 @@ TARGETS = {
         "event_status_failed_retryable": "Błąd tymczasowy — ponowimy próbę",
         "pin_setup_hint": "Utwórz PIN, aby chronić aplikację i zdarzenia.",
         "pin_setup_title": "Blokada aplikacji",
-        "permission_denied": "Odmowa uprawnień. Spróbuj ponownie w Ustawieniach.",
     },
 }
 
