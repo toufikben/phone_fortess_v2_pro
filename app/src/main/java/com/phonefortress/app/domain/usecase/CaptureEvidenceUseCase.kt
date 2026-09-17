@@ -37,7 +37,7 @@ class CaptureEvidenceUseCase @Inject constructor(
             lastTransitionReason = "event-created-effective-threshold=$effectiveThreshold;configured=$configuredThreshold",
             isTest = isTest
         )
-        eventRepository.save(event)
+        eventRepository.create(event)
         Logger.i("Event created: $eventId (attempts=$attempts, threshold=$effectiveThreshold, test=$isTest)")
         CameraForegroundService.start(context, eventId, isTest)
         return eventId

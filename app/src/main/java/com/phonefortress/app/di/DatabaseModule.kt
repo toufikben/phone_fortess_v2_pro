@@ -3,6 +3,7 @@ package com.phonefortress.app.di
 import android.content.Context
 import androidx.room.Room
 import com.phonefortress.app.data.local.AppDatabase
+import com.phonefortress.app.data.local.RoomMigrations
 import com.phonefortress.app.data.local.dao.AlertLogDao
 import com.phonefortress.app.data.local.dao.EventDao
 import com.phonefortress.app.data.local.dao.SafeZoneDao
@@ -21,7 +22,7 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, "phone_fortress.db")
-            .fallbackToDestructiveMigration()
+            .addMigrations(RoomMigrations.MIGRATION_4_5)
             .build()
 
     @Provides

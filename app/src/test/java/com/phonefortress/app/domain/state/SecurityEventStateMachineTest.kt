@@ -5,6 +5,7 @@ import com.phonefortress.app.domain.model.EventOperation
 import com.phonefortress.app.domain.model.SecurityEvent
 import com.phonefortress.app.domain.model.SecurityEventStatus
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class SecurityEventStateMachineTest {
     private fun event(status: SecurityEventStatus) = SecurityEvent("test-id", 1L, 3, 3, status = status)
@@ -54,5 +55,14 @@ class SecurityEventStateMachineTest {
         val terminal = event(SecurityEventStatus.SENT)
         assertThat(SecurityEventStateMachine.transition(terminal, SecurityEventStatus.PENDING, "invalid"))
             .isEqualTo(terminal)
+    }
+
+    @Test fun `in progress cannot transition to itself`() {
+        assertThat(SecurityEventStateMachine.canTransition(SecurityEventStatus.IN_PROGRESS, SecurityEventStatus.IN_PROGRESS)).isFalse()
+        assertThrows<IllegalStateException> {
+            SecurityEventStateMachine.transitionRequired(
+                event(SecurityEventStatus.IN_PROGRESS), SecurityEventStatus.IN_PROGRESS, "duplicate-claim"
+            )
+        }
     }
 }

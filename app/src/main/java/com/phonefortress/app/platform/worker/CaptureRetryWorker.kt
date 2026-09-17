@@ -35,10 +35,15 @@ class CaptureRetryWorker @AssistedInject constructor(
             return Result.failure()
         }
         return try {
-            when (event.operation) {
+            val recoverableEvent = if (event.status == SecurityEventStatus.IN_PROGRESS && event.operation == EventOperation.CAPTURE) {
+                eventRepository.transition(eventId, SecurityEventStatus.FAILED_RETRYABLE, "stale-process-recovery", EventOperation.CAPTURE)
+                    ?: return Result.failure()
+            } else event
+            when (recoverableEvent.operation) {
                 EventOperation.CAPTURE -> {
-                    eventRepository.transition(eventId, SecurityEventStatus.IN_PROGRESS, "capture-retry-$attempt", EventOperation.CAPTURE)
-                    CameraForegroundService.start(applicationContext, eventId, event.isTest)
+                    // CameraForegroundService owns FAILED_RETRYABLE -> IN_PROGRESS.
+                    // Keeping the transition in one place prevents IN_PROGRESS -> IN_PROGRESS.
+                    CameraForegroundService.start(applicationContext, eventId, recoverableEvent.isTest)
                 }
                 EventOperation.SEND -> WorkScheduler.dispatchEventNow(applicationContext, eventId)
             }

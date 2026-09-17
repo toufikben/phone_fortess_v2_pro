@@ -15,6 +15,9 @@ import com.phonefortress.app.util.Logger
 import java.util.concurrent.TimeUnit
 
 object WorkScheduler {
+    private fun captureRetryName(eventId: String) = "retry_capture_$eventId"
+    private fun sendWorkName(eventId: String) = "send_$eventId"
+
     private fun enqueueCaptureRetry(context: Context, eventId: String, attempt: Int) {
         val data = Data.Builder().putString(CaptureRetryWorker.KEY_EVENT_ID, eventId)
             .putInt(CaptureRetryWorker.KEY_ATTEMPT, attempt).build()
@@ -26,7 +29,7 @@ object WorkScheduler {
             .addTag("capture_retry")
             .addTag("capture_retry_$eventId").build()
         WorkManager.getInstance(context).enqueueUniqueWork(
-            "${Constants.WORK_CAPTURE_RETRY}_$eventId", ExistingWorkPolicy.KEEP, request
+            captureRetryName(eventId), ExistingWorkPolicy.KEEP, request
         )
     }
 
@@ -51,7 +54,7 @@ object WorkScheduler {
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 15, TimeUnit.SECONDS)
             .addTag("event_dispatch").addTag("dispatch_$eventId").build()
         WorkManager.getInstance(context).enqueueUniqueWork(
-            "${Constants.WORK_EVENT_DISPATCH}_$eventId", ExistingWorkPolicy.KEEP, request
+            sendWorkName(eventId), ExistingWorkPolicy.KEEP, request
         )
     }
 
@@ -74,8 +77,8 @@ object WorkScheduler {
 
     fun cancelForEvent(context: Context, eventId: String) {
         WorkManager.getInstance(context).apply {
-            cancelUniqueWork("${Constants.WORK_CAPTURE_RETRY}_$eventId")
-            cancelUniqueWork("${Constants.WORK_EVENT_DISPATCH}_$eventId")
+            cancelUniqueWork(captureRetryName(eventId))
+            cancelUniqueWork(sendWorkName(eventId))
             cancelAllWorkByTag("capture_retry_$eventId")
             cancelAllWorkByTag("dispatch_$eventId")
         }

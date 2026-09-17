@@ -100,6 +100,10 @@ class CameraForegroundService : Service(), LifecycleOwner {
     private suspend fun processEvent(eventId: String) {
         var event = eventRepository.getById(eventId) ?: return
         if (event.status == SecurityEventStatus.SENT || event.status == SecurityEventStatus.FAILED_FINAL || event.status == SecurityEventStatus.CANCELLED) return
+        if (event.status == SecurityEventStatus.IN_PROGRESS) {
+            Logger.i("Event already claimed; ignoring duplicate start: $eventId")
+            return
+        }
         if (event.status == SecurityEventStatus.FAILED_RETRYABLE && event.operation != EventOperation.CAPTURE) return
         event = eventRepository.transition(eventId, SecurityEventStatus.IN_PROGRESS, "capture-start", EventOperation.CAPTURE) ?: return
         val evidenceDir = File(filesDir, Constants.DIR_EVIDENCE).apply { mkdirs() }
@@ -108,9 +112,9 @@ class CameraForegroundService : Service(), LifecycleOwner {
         if (securityPrefs.capturePhoto.first()) withTimeoutOrNull(Constants.CAMERA_TIMEOUT_MS) { cameraController.captureFrontPhoto(this@CameraForegroundService, photosDir) }?.let { event = event.copy(photoPath = it.absolutePath) }
         if (securityPrefs.captureAudio.first()) withTimeoutOrNull(Constants.AUDIO_DURATION_MS + 5_000L) { audioRecorder.recordShort(audioDir) }?.let { event = event.copy(audioPath = it.absolutePath) }
         if (securityPrefs.captureLocation.first()) withTimeoutOrNull(Constants.LOCATION_TIMEOUT_MS + 2_000L) { locationProvider.getCurrentLocation() }?.let { event = event.copy(latitude = it.latitude, longitude = it.longitude, locationAccuracy = it.accuracy) }
-        eventRepository.save(event)
+        eventRepository.updateMetadata(event)
         event = eventRepository.transition(eventId, SecurityEventStatus.CAPTURED, "capture-complete", EventOperation.CAPTURE) ?: return
-        eventRepository.save(event)
+        eventRepository.updateMetadata(event)
         event = eventRepository.transition(eventId, SecurityEventStatus.SEND_PENDING, "dispatch-ready", EventOperation.SEND) ?: return
         WorkScheduler.dispatchEventNow(applicationContext, eventId)
         cameraController.release()

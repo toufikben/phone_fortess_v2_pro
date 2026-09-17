@@ -12,6 +12,30 @@ interface EventDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(event: SecurityEventEntity)
 
+    @Query("""
+        UPDATE security_events SET
+            photoPath = :photoPath,
+            audioPath = :audioPath,
+            latitude = :latitude,
+            longitude = :longitude,
+            locationAccuracy = :locationAccuracy,
+            threatScore = :threatScore,
+            threatLevel = :threatLevel,
+            threatReasons = :threatReasons
+        WHERE eventId = :eventId
+    """)
+    suspend fun updateMetadata(
+        eventId: String,
+        photoPath: String?,
+        audioPath: String?,
+        latitude: Double?,
+        longitude: Double?,
+        locationAccuracy: Float?,
+        threatScore: Int,
+        threatLevel: String,
+        threatReasons: String
+    )
+
     @Query("SELECT * FROM security_events WHERE eventId = :eventId LIMIT 1")
     suspend fun getById(eventId: String): SecurityEventEntity?
 
@@ -23,6 +47,9 @@ interface EventDao {
 
     @Query("SELECT * FROM security_events WHERE status IN ('PENDING','DEFERRED','IN_PROGRESS','CAPTURED','SEND_PENDING','FAILED_RETRYABLE') ORDER BY timestamp ASC")
     suspend fun getActive(): List<SecurityEventEntity>
+
+    @Query("SELECT * FROM security_events WHERE status = 'IN_PROGRESS' AND timestamp < :before ORDER BY timestamp ASC")
+    suspend fun getStaleInProgress(before: Long): List<SecurityEventEntity>
 
     @Query("SELECT * FROM security_events WHERE timestamp < :before AND status IN ('SENT','FAILED_FINAL','CANCELLED')")
     suspend fun getTerminalBefore(before: Long): List<SecurityEventEntity>

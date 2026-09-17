@@ -19,9 +19,10 @@ class EventRepositoryTest {
     private lateinit var dao: EventDao
     private lateinit var repo: EventRepository
     @BeforeEach fun setup() { dao = mockk(relaxed = true); repo = EventRepository(dao) }
-    @Test fun `save converts event to entity`() = runTest {
+    @Test fun `create converts event to entity`() = runTest {
         val event = SecurityEvent("evt-1", 100L, 2, 3, status = SecurityEventStatus.PENDING)
-        repo.save(event)
+        coEvery { dao.getById("evt-1") } returns null
+        repo.create(event)
         coVerify { dao.upsert(match { it.eventId == "evt-1" && it.status == "PENDING" }) }
     }
     @Test fun `get by id converts entity to domain`() = runTest {
@@ -32,6 +33,10 @@ class EventRepositoryTest {
         coEvery { dao.getById("evt-1") } returns SecurityEventEntity.fromDomain(SecurityEvent("evt-1", 100L, 2, 3))
         repo.transition("evt-1", SecurityEventStatus.IN_PROGRESS, "test")
         coVerify { dao.upsert(match { it.eventId == "evt-1" && it.status == "IN_PROGRESS" && it.lastTransitionReason == "test" }) }
+    }
+    @Test fun `metadata update delegates without changing status`() = runTest {
+        repo.updateMetadata(SecurityEvent("evt-1", 100L, 2, 3, photoPath = "/tmp/photo.jpg"))
+        coVerify { dao.updateMetadata("evt-1", "/tmp/photo.jpg", null, null, null, null, 0, "LOW", "") }
     }
     @Test fun `active events are mapped`() = runTest { coEvery { dao.getActive() } returns emptyList(); assertThat(repo.getActive()).isEmpty() }
     @Test fun `observe recent maps empty flow`() = runTest { every { dao.observeRecent(50) } returns flowOf(emptyList()); assertThat(repo.observeRecent().first()).isEmpty() }

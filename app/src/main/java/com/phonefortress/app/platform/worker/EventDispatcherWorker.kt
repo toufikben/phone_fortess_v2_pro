@@ -25,6 +25,9 @@ class EventDispatcherWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         return try {
+            eventRepository.getStaleInProgress(System.currentTimeMillis() - 5 * 60_000L)
+                .filter { it.operation == EventOperation.CAPTURE }
+                .forEach { WorkScheduler.scheduleCaptureRetry(applicationContext, it.id, 1) }
             val ids = inputData.getString(KEY_EVENT_ID)?.let { listOf(it) }
             val events = ids?.mapNotNull { eventRepository.getById(it) } ?: eventRepository.getDispatchable()
             var retryable = false
