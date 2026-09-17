@@ -36,13 +36,16 @@ class NtfyChannel @Inject constructor(
     override suspend fun isConfigured(): Boolean {
         if (!isEnabled()) return false
         val url = prefs.ntfyUrl.first()
-        return url.startsWith("http")
+        return url.startsWith("https://", ignoreCase = true)
     }
 
     override suspend fun send(event: SecurityEvent, payload: AlertPayload): AlertResult =
         withContext(Dispatchers.IO) {
             val url = prefs.ntfyUrl.first()
             if (url.isBlank()) return@withContext AlertResult.Fatal("ntfy URL missing", id)
+            if (!url.startsWith("https://", ignoreCase = true)) {
+                return@withContext AlertResult.Fatal("ntfy URL must use HTTPS", id)
+            }
 
             try {
                 val requestBuilder = Request.Builder()
