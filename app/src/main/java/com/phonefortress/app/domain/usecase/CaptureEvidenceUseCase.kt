@@ -38,7 +38,7 @@ class CaptureEvidenceUseCase @Inject constructor(
             isTest = isTest
         )
         eventRepository.create(event)
-        Logger.i("Event created: $eventId (attempts=$attempts, threshold=$effectiveThreshold, test=$isTest)")
+        Logger.i("Security event created")
         CameraForegroundService.start(context, eventId, isTest)
         return eventId
     }

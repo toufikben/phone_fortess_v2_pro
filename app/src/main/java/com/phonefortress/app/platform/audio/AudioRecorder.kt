@@ -86,8 +86,8 @@ class AudioRecorder @Inject constructor(
                 release()
             }
             recorder = null
-        } catch (e: Exception) {
-            Logger.w("Stop recorder warning: ${e.message}")
+        } catch (_: Exception) {
+            Logger.w("Audio recorder stop warning")
             recorder?.runCatching { release() }
             recorder = null
         }

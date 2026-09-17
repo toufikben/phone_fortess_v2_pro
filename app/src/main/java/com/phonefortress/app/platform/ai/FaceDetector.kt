@@ -175,8 +175,8 @@ class FaceDetector @Inject constructor(
             }
             bitmap.recycle()
             if (count > 0) (total.toFloat() / count) / 255f else -1f
-        } catch (e: Exception) {
-            Logger.w("Brightness check failed: ${e.message}")
+        } catch (_: Exception) {
+            Logger.w("Brightness check failed")
             -1f
         }
     }
@@ -185,8 +185,8 @@ class FaceDetector @Inject constructor(
         try {
             detector?.close()
             detector = null
-        } catch (e: Exception) {
-            Logger.w("FaceDetector release: ${e.message}")
+        } catch (_: Exception) {
+            Logger.w("Face detector release failed")
         }
     }
 }

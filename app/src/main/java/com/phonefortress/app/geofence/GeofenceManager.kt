@@ -89,8 +89,8 @@ class GeofenceManager @Inject constructor(
         try {
             client.removeGeofences(getPendingIntent()).await()
             true
-        } catch (e: Exception) {
-            Logger.w("Unregister geofences: ${e.message}")
+        } catch (_: Exception) {
+            Logger.w("Unregister geofences failed")
             false
         }
     }

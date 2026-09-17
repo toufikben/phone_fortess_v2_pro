@@ -29,10 +29,10 @@ object SecurityEventStateMachine {
         operation: EventOperation = event.operation
     ): SecurityEvent {
         if (!canTransition(event.status, target) || !operationMatches(event.status, target, operation)) {
-            Logger.w("Illegal transition: ${event.status} -> $target (event ${event.id}, reason=$reason)")
+            Logger.w("Illegal security-event transition")
             return event
         }
-        Logger.d("Event ${event.id}: ${event.status} -> $target (reason=$reason)")
+        Logger.d("Security-event transition accepted")
         return event.copy(status = target, operation = operation, lastTransitionReason = reason)
     }
 
