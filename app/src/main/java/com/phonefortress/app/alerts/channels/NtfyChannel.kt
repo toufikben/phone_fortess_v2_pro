@@ -27,6 +27,11 @@ class NtfyChannel @Inject constructor(
     private val client: OkHttpClient
 ) : AlertChannel {
 
+    companion object {
+        internal fun isSecureEndpoint(url: String): Boolean =
+            url.startsWith("https://", ignoreCase = true)
+    }
+
     override val id: String = "ntfy"
     override val displayName: String = "ntfy.sh"
     override val requiresConfig: Boolean = true
@@ -36,14 +41,14 @@ class NtfyChannel @Inject constructor(
     override suspend fun isConfigured(): Boolean {
         if (!isEnabled()) return false
         val url = prefs.ntfyUrl.first()
-        return url.startsWith("https://", ignoreCase = true)
+        return isSecureEndpoint(url)
     }
 
     override suspend fun send(event: SecurityEvent, payload: AlertPayload): AlertResult =
         withContext(Dispatchers.IO) {
             val url = prefs.ntfyUrl.first()
             if (url.isBlank()) return@withContext AlertResult.Fatal("ntfy URL missing", id)
-            if (!url.startsWith("https://", ignoreCase = true)) {
+            if (!isSecureEndpoint(url)) {
                 return@withContext AlertResult.Fatal("ntfy URL must use HTTPS", id)
             }
 

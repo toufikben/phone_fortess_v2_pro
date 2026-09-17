@@ -111,7 +111,7 @@ Step 6: المخرجات
 app/build/outputs/
 ├── apk/
 │   ├── debug/app-debug.apk
-│   └── release/app-release.apk
+│   ├── release/app-release-unsigned.apk (ما لم تُضف إعدادات توقيع الإنتاج)
 └── bundle/
     └── release/app-release.aab
 ```

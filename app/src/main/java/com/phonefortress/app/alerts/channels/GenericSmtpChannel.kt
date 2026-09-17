@@ -37,6 +37,10 @@ class GenericSmtpChannel @Inject constructor(
     private val prefs: AlertPrefs
 ) : AlertChannel {
 
+    companion object {
+        internal fun isSecureTransport(useTls: Boolean): Boolean = useTls
+    }
+
     override val id: String = "smtp"
     override val displayName: String = "بريد إلكتروني (SMTP)"
     override val requiresConfig: Boolean = true
@@ -46,13 +50,16 @@ class GenericSmtpChannel @Inject constructor(
     override suspend fun isConfigured(): Boolean {
         if (!isEnabled()) return false
         val cfg = prefs.getSmtpConfig() ?: return false
-        return cfg.host.isNotBlank() && cfg.port > 0 && cfg.to.isNotBlank()
+        return cfg.host.isNotBlank() && cfg.port > 0 && cfg.to.isNotBlank() && isSecureTransport(cfg.useTls)
     }
 
     override suspend fun send(event: SecurityEvent, payload: AlertPayload): AlertResult =
         withContext(Dispatchers.IO) {
             val cfg = prefs.getSmtpConfig()
                 ?: return@withContext AlertResult.Fatal("SMTP not configured", id)
+            if (!isSecureTransport(cfg.useTls)) {
+                return@withContext AlertResult.Fatal("SMTP requires TLS", id)
+            }
 
             try {
                 val session = createSession(cfg)

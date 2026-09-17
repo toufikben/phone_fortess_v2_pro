@@ -21,7 +21,7 @@ echo "📦 Building release..."
 # 3. نسخ المخرجات
 echo "📁 Copying artifacts..."
 mkdir -p "${OUT_DIR}/artifacts"
-cp app/build/outputs/apk/release/app-release.apk "${OUT_DIR}/artifacts/"
+cp app/build/outputs/apk/release/app-release-unsigned.apk "${OUT_DIR}/artifacts/"
 cp app/build/outputs/bundle/release/app-release.aab "${OUT_DIR}/artifacts/"
 
 # 4. نسخ الكود المصدري
@@ -45,7 +45,7 @@ Build Date: ${DATE}
 Built At: $(date)
 
 Artifacts:
-- app-release.apk (Release APK)
+- app-release-unsigned.apk (Unsigned Release APK; sign externally for distribution)
 - app-release.aab (Google Play Bundle)
 
 Requirements:
@@ -62,8 +62,8 @@ Build Commands:
 2. Build:
    ./gradlew assembleRelease
 
-3. Install:
-   adb install -r app/build/outputs/apk/release/app-release.apk
+3. Distribution signing:
+   Configure a production signing key in app/build.gradle.kts, then rebuild before distribution.
 EOF
 
 # 7. ضغط
@@ -79,7 +79,7 @@ echo "📦 Output: dist/${PROJECT_NAME}-v${VERSION}-${DATE}.zip"
 echo "📊 Size: $(du -sh dist/${PROJECT_NAME}-v${VERSION}-${DATE}.zip | cut -f1)"
 echo ""
 echo "Contents:"
-echo "  - artifacts/app-release.apk"
+echo "  - artifacts/app-release-unsigned.apk"
 echo "  - artifacts/app-release.aab"
 echo "  - source/ (كل الكود + التوثيق)"
 echo "  - BUILD_INFO.txt"

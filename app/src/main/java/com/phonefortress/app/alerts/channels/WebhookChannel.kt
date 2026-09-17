@@ -29,6 +29,11 @@ class WebhookChannel @Inject constructor(
     private val client: OkHttpClient
 ) : AlertChannel {
 
+    companion object {
+        internal fun isSecureEndpoint(url: String): Boolean =
+            url.startsWith("https://", ignoreCase = true)
+    }
+
     override val id: String = "webhook"
     override val displayName: String = "Webhook"
     override val requiresConfig: Boolean = true
@@ -37,7 +42,7 @@ class WebhookChannel @Inject constructor(
 
     override suspend fun isConfigured(): Boolean {
         if (!isEnabled()) return false
-        return prefs.webhookUrl.first().startsWith("http")
+        return isSecureEndpoint(prefs.webhookUrl.first())
     }
 
     override suspend fun send(event: SecurityEvent, payload: AlertPayload): AlertResult =
@@ -45,6 +50,9 @@ class WebhookChannel @Inject constructor(
             val url = prefs.webhookUrl.first()
             val method = prefs.webhookMethod.first()
             if (url.isBlank()) return@withContext AlertResult.Fatal("Webhook URL missing", id)
+            if (!isSecureEndpoint(url)) {
+                return@withContext AlertResult.Fatal("Webhook URL must use HTTPS", id)
+            }
 
             try {
                 val jsonBody = buildJson(payload)
