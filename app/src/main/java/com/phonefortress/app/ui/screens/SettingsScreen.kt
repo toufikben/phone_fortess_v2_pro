@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Palette
@@ -39,7 +40,7 @@ import com.phonefortress.app.ui.viewmodel.ThemeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onThemePicker: () -> Unit, onPinSetup: () -> Unit, themeViewModel: ThemeViewModel = hiltViewModel()) {
+fun SettingsScreen(onBack: () -> Unit, onThemePicker: () -> Unit, onPinSetup: () -> Unit, onNavigateToDiagnostics: () -> Unit, themeViewModel: ThemeViewModel = hiltViewModel()) {
     val currentTheme by themeViewModel.selectedTheme.collectAsStateWithLifecycle()
     val tokens = LocalThemeTokens.current
     Scaffold(topBar = {
@@ -59,6 +60,7 @@ fun SettingsScreen(onBack: () -> Unit, onThemePicker: () -> Unit, onPinSetup: ()
             item { SettingsSection("عن التطبيق") }
             item { SettingsItem(Icons.Default.Info, "الإصدار", "2.0.0", {}) }
             item { SettingsItem(Icons.Default.Shield, "الإفصاح والخصوصية", "لا سحابة · لا جمع بيانات", {}) }
+            item { SettingsItem(Icons.Default.BugReport, "تشخيص النظام", "عرض حالة العمال الخلفية", onNavigateToDiagnostics) }
         }
     }
 }

@@ -18,6 +18,12 @@ object Constants {
     const val WORK_CAPTURE_RETRY = "work_capture_retry"
     const val WORK_PHOTO_CLEANUP = "work_photo_cleanup"
     const val WORK_EVENT_DISPATCH = "work_event_dispatch"
+    const val CAPTURE_RETRY_MAX_ATTEMPTS = 3
+    const val CAPTURE_RETRY_DELAY_SEC = 30L
+    const val DISPATCH_MAX_ATTEMPTS = 5
+    const val DISPATCH_DELAY_SEC = 15L
+    const val PHOTO_CLEANUP_INTERVAL_HOURS = 24L
+    const val PERIODIC_DISPATCH_INTERVAL_HOURS = 6L
 
     // Storage
     const val DIR_EVIDENCE = "evidence"

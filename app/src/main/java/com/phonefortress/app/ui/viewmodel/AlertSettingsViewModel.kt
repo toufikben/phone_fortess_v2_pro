@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phonefortress.app.alerts.AlertDispatcher
 import com.phonefortress.app.data.prefs.AlertPrefs
+import com.phonefortress.app.domain.model.AlertResult
+import com.phonefortress.app.domain.model.SecurityEvent
+import com.phonefortress.app.domain.model.ThreatLevel
 import com.phonefortress.app.ui.screens.ChannelUiModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +20,8 @@ data class AlertSettingsState(
     val channels: List<ChannelUiModel> = emptyList(),
     val loading: Boolean = true,
     val lastTestResult: String? = null,
-    val lastTestSuccess: Boolean = false
+    val lastTestSuccess: Boolean = false,
+    val testingChannelId: String? = null
 )
 
 @HiltViewModel
@@ -79,11 +83,25 @@ class AlertSettingsViewModel @Inject constructor(
                 }
                 return@launch
             }
-            // Note: dispatcher will send to ALL channels.
-            // In real config screen, we would test a single channel.
-            // For now, keep simple: refresh status.
+            _state.update { it.copy(testingChannelId = id, lastTestResult = null) }
+            val success = runCatching {
+                val testEvent = SecurityEvent(
+                    id = "test-${System.currentTimeMillis()}",
+                    timestamp = System.currentTimeMillis(),
+                    failedAttempts = 3,
+                    threshold = 3,
+                    isTest = true,
+                    threatScore = 50,
+                    threatLevel = ThreatLevel.MEDIUM
+                )
+                dispatcher.dispatch(testEvent).any { it is AlertResult.Success }
+            }.getOrDefault(false)
             _state.update {
-                it.copy(lastTestResult = "ℹ استخدم شاشة الإعداد لاختبار القناة", lastTestSuccess = false)
+                it.copy(
+                    testingChannelId = null,
+                    lastTestResult = if (success) "✓ نجح الإرسال" else "❌ فشل الإرسال",
+                    lastTestSuccess = success
+                )
             }
         }
     }

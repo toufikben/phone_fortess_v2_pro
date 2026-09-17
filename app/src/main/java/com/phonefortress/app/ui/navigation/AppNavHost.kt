@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.phonefortress.app.ui.screens.AlertSettingsScreen
+import com.phonefortress.app.ui.screens.DiagnosticsScreen
 import com.phonefortress.app.ui.screens.GeofenceScreen
 import com.phonefortress.app.ui.screens.HomeScreen
 import com.phonefortress.app.ui.screens.LogsScreen
@@ -20,6 +21,7 @@ object Routes {
     const val SETTINGS = "settings"
     const val THEME_PICKER = "theme_picker"
     const val PIN_SETUP = "pin_setup"
+    const val DIAGNOSTICS = "diagnostics"
 }
 
 @Composable
@@ -40,10 +42,12 @@ fun AppNavHost(navController: NavHostController) {
             SettingsScreen(
                 onBack = { navController.popBackStack() },
                 onThemePicker = { navController.navigate(Routes.THEME_PICKER) },
-                onPinSetup = { navController.navigate(Routes.PIN_SETUP) }
+                onPinSetup = { navController.navigate(Routes.PIN_SETUP) },
+                onNavigateToDiagnostics = { navController.navigate(Routes.DIAGNOSTICS) }
             )
         }
         composable(Routes.THEME_PICKER) { ThemePickerScreen(onBack = { navController.popBackStack() }) }
         composable(Routes.PIN_SETUP) { PinSetupScreen(onBack = { navController.popBackStack() }) }
+        composable(Routes.DIAGNOSTICS) { DiagnosticsScreen(onBack = { navController.popBackStack() }) }
     }
 }
