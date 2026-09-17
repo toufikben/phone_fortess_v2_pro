@@ -28,7 +28,7 @@ object SecurityEventStateMachine {
         reason: String = "unspecified",
         operation: EventOperation = event.operation
     ): SecurityEvent {
-        if (!canTransition(event.status, target)) {
+        if (!canTransition(event.status, target) || !operationMatches(event.status, target, operation)) {
             Logger.w("Illegal transition: ${event.status} -> $target (event ${event.id}, reason=$reason)")
             return event
         }
@@ -45,7 +45,24 @@ object SecurityEventStateMachine {
         check(canTransition(event.status, target)) {
             "Illegal transition ${event.status} -> $target for ${event.id} ($reason)"
         }
+        check(operationMatches(event.status, target, operation)) {
+            "Operation $operation cannot transition ${event.status} -> $target for ${event.id}"
+        }
         return transition(event, target, reason, operation)
+    }
+
+    private fun operationMatches(
+        from: SecurityEventStatus,
+        to: SecurityEventStatus,
+        operation: EventOperation
+    ): Boolean = when {
+        to == SecurityEventStatus.IN_PROGRESS -> operation == EventOperation.CAPTURE
+        from == SecurityEventStatus.IN_PROGRESS && to == SecurityEventStatus.CAPTURED -> operation == EventOperation.CAPTURE
+        from == SecurityEventStatus.CAPTURED && to == SecurityEventStatus.SEND_PENDING -> operation == EventOperation.SEND
+        from == SecurityEventStatus.SEND_PENDING && to == SecurityEventStatus.SENT -> operation == EventOperation.SEND
+        from == SecurityEventStatus.FAILED_RETRYABLE && to == SecurityEventStatus.SEND_PENDING -> operation == EventOperation.SEND
+        from == SecurityEventStatus.FAILED_RETRYABLE && to == SecurityEventStatus.FAILED_FINAL -> true
+        else -> true
     }
 
     fun isTerminal(status: SecurityEventStatus): Boolean = status in setOf(

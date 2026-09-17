@@ -12,6 +12,22 @@ interface EventDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(event: SecurityEventEntity)
 
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insert(event: SecurityEventEntity)
+
+    @Query("""
+        UPDATE security_events SET status = :targetStatus, operation = :operation,
+            lastTransitionReason = :reason
+        WHERE eventId = :eventId AND status = :expectedStatus
+    """)
+    suspend fun transitionStatus(
+        eventId: String,
+        expectedStatus: String,
+        targetStatus: String,
+        operation: String,
+        reason: String
+    ): Int
+
     @Query("""
         UPDATE security_events SET
             photoPath = :photoPath,

@@ -8,19 +8,14 @@ import com.phonefortress.app.domain.model.SecurityEventStatus
 import com.phonefortress.app.domain.state.SecurityEventStateMachine
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class EventRepository @Inject constructor(private val dao: EventDao) {
-    private val eventMutex = Mutex()
-
     suspend fun create(event: SecurityEvent) {
         require(event.status == SecurityEventStatus.PENDING) { "New events must start in PENDING" }
-        require(dao.getById(event.id) == null) { "Event already exists: ${event.id}" }
-        dao.upsert(SecurityEventEntity.fromDomain(event))
+        dao.insert(SecurityEventEntity.fromDomain(event))
     }
 
     suspend fun updateMetadata(event: SecurityEvent) {
@@ -44,16 +39,24 @@ class EventRepository @Inject constructor(private val dao: EventDao) {
     suspend fun getTerminalBefore(timestamp: Long): List<SecurityEvent> = dao.getTerminalBefore(timestamp).map { it.toDomain() }
     fun observeRecent(limit: Int = 50): Flow<List<SecurityEvent>> = dao.observeRecent(limit).map { list -> list.map { it.toDomain() } }
 
+    /** State validation happens in-process; the conditional UPDATE is the cross-process claim. */
     suspend fun transition(
         eventId: String,
         target: SecurityEventStatus,
         reason: String,
         operation: EventOperation? = null
-    ): SecurityEvent? = eventMutex.withLock {
-        val current = getById(eventId) ?: return@withLock null
-        val next = SecurityEventStateMachine.transitionRequired(current, target, reason, operation ?: current.operation)
-        dao.upsert(SecurityEventEntity.fromDomain(next))
-        next
+    ): SecurityEvent? {
+        val current = getById(eventId) ?: return null
+        val effectiveOperation = operation ?: current.operation
+        val next = SecurityEventStateMachine.transitionRequired(current, target, reason, effectiveOperation)
+        val updated = dao.transitionStatus(
+            eventId = eventId,
+            expectedStatus = current.status.name,
+            targetStatus = next.status.name,
+            operation = next.operation.name,
+            reason = reason
+        )
+        return if (updated == 1) getById(eventId) else null
     }
 
     suspend fun deleteOlderThan(timestamp: Long) { dao.deleteOlderThan(timestamp) }

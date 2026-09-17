@@ -65,4 +65,26 @@ class SecurityEventStateMachineTest {
             )
         }
     }
+
+    @Test fun `retry operation selects only its own path`() {
+        val captureFailure = SecurityEventStateMachine.transitionRequired(
+            event(SecurityEventStatus.IN_PROGRESS), SecurityEventStatus.FAILED_RETRYABLE,
+            "capture-failure", EventOperation.CAPTURE
+        )
+        assertThrows<IllegalStateException> {
+            SecurityEventStateMachine.transitionRequired(
+                captureFailure, SecurityEventStatus.SEND_PENDING, "wrong-path", EventOperation.CAPTURE
+            )
+        }
+
+        val sendFailure = SecurityEventStateMachine.transitionRequired(
+            event(SecurityEventStatus.SEND_PENDING), SecurityEventStatus.FAILED_RETRYABLE,
+            "send-failure", EventOperation.SEND
+        )
+        assertThrows<IllegalStateException> {
+            SecurityEventStateMachine.transitionRequired(
+                sendFailure, SecurityEventStatus.IN_PROGRESS, "wrong-path", EventOperation.SEND
+            )
+        }
+    }
 }
