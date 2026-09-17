@@ -1,0 +1,79 @@
+🛡️ Phone Fortress
+
+Smart phone protection — No cloud required!
+
+Worried someone might open your phone?
+Phone Fortress solves it!
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+✨ Features:
+
+🔒 Smart Monitoring
+• Detects failed unlock attempts
+• Configurable threshold
+• Persistent status notification
+
+📸 Evidence Capture
+• Front camera photo
+• 10-second audio recording
+• High-accuracy location
+
+🧠 AI Analysis
+• Threat score 0-100
+• On-device face detection
+• Suspicious behavior detection
+
+📡 6 Alert Channels
+• Telegram
+• ntfy.sh
+• SMTP Email
+• Webhook
+• SMS
+• Local notification
+
+📍 Smart Zones
+• Safe (Home): 5 attempts
+• Neutral: 3 attempts
+• Danger (Airport): 1 attempt
+
+🎨 4 Visual Identities
+• Fortress Noir
+• Liquid Shield
+• Cyber Terminal
+• Guardian Minimal
+
+🌍 25 Languages
+Arabic, English, French, Spanish, German, Portuguese, Italian, Russian, Chinese, Japanese, Korean, Hindi, Urdu, Turkish, Persian, Indonesian, Malay, Thai, Vietnamese, Hebrew, Dutch, Polish, Ukrainian, Bengali
+
+🔐 Advanced Security
+• Strong PIN (PBKDF2)
+• Biometric unlock
+• Auto-lock
+• Root detection
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Privacy First:
+• No cloud
+• No tracking
+• No ads
+• Everything stored on your device
+
+⚠️ Disclosure:
+• Not an antivirus
+• No continuous location tracking
+• Cannot guarantee photo capture in all conditions
+• Use on your own device only
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+💰 Free + Pro
+• Free: 3 zones, 2 channels, 3 attempts
+• Pro: Unlimited + AI + 6 channels
+• Monthly: $2.99
+• Yearly: $19.99 (Save 45%)
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+📧 support@phonefortress.app

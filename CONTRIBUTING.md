@@ -1,35 +1,44 @@
-# المساهمة
+# 🤝 دليل المساهمة
 
-## المتطلبات
+## قبل البدء
+1. افتح Issue لمناقشة الفكرة
+2. انتظر الموافقة
+3. Fork المشروع
+4. أنشئ فرعاً جديداً
 
-- JDK 21.
-- Android SDK مع compile SDK 36.
-- Gradle wrapper أو Gradle المحلي المعتمد في البيئة.
+## تسمية الفروع
+- `feature/xxx` — ميزة جديدة
+- `fix/xxx` — إصلاح خطأ
+- `docs/xxx` — تحديث توثيق
+- `refactor/xxx` — إعادة هيكلة
 
-## التحقق المحلي
+## قواعد الكود
+- اتبع `Kotlin Style Guide`
+- استخدم `ktlint`
+- اكتب اختبارات
+- لا تكسر الاختبارات الحالية
 
+## قبل Commit
 ```bash
-export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
-export ANDROID_SDK_ROOT=/home/ubuntu/android-sdk
-./gradlew assembleDebug
+./gradlew ktlintCheck
 ./gradlew testDebugUnitTest
-./gradlew lintDebug
+./gradlew assembleDebug
 ```
 
-## قواعد العمل
+رسائل Commit
 
-- لا ترفع مفاتيح API أو كلمات المرور أو ملفات keystore.
-- لا تغيّر الأذونات الحساسة دون توثيق السبب وسلوك الرفض.
-- أضف اختبارًا لأي منطق جديد في المجال أو التخزين.
-- حافظ على الفصل بين domain وdata وplatform وui.
-- استخدم `Logger` بدل Logcat المباشر، ولا تسجل بيانات حساسة.
-- يجب أن تكون تغييرات قاعدة البيانات مصحوبة برقم إصدار وخطة ترحيل واضحة.
+```
+feat: add new feature
+fix: resolve bug
+docs: update documentation
+refactor: improve code structure
+test: add tests
+chore: update dependencies
+```
 
-## أسلوب الالتزام
+Pull Request
 
-استخدم رسائل واضحة مثل:
-
-- `feat: add safe zone management`
-- `fix: handle denied location permission`
-- `test: cover threat scoring`
-- `docs: update roadmap`
+· وصف واضح
+· Screenshots للواجهة
+· اختبارات
+· لا merge بدون review

@@ -1,35 +1,38 @@
-# Gradle
+# Android
+*.iml
 .gradle/
-**/build/
+/local.properties
+/.idea/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
 local.properties
 
-# Android Studio / IntelliJ
-.idea/
-*.iml
-*.ipr
-*.iws
-captures/
-.externalNativeBuild/
-.cxx/
-
-# OS / editor
-.DS_Store
-Thumbs.db
-*.swp
-*.swo
-
-# Secrets and local configuration
-.env
-.env.*
-*.keystore
+# Keystore
 *.jks
-secrets.properties
+*.keystore
+keystore.properties
 
-# Reports and generated artifacts
+# AI Models (حمّلها منفصلة)
+app/src/main/assets/*.tflite
+
+# Logs
 *.log
-app/reports/
-app/schemas/
 
-# Keep the MediaPipe model tracked explicitly
-!app/src/main/assets/
-!app/src/main/assets/blaze_face_short_range.tflite
+# Env
+.env
+.env.local
+
+# Build outputs
+app/release/
+app/debug/
+outputs/
+
+# Test reports
+app/build/reports/
+app/build/test-results/
+
+# OS
+Thumbs.db
