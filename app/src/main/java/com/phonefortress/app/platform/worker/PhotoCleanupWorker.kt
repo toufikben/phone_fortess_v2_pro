@@ -23,6 +23,7 @@ class PhotoCleanupWorker @AssistedInject constructor(
     override suspend fun doWork(): Result = try {
         val retentionDays = securityPrefs.retentionDays.first()
         val cutoff = System.currentTimeMillis() - retentionDays * 24L * 60 * 60 * 1000
+        eventRepository.clearEvidencePathsBefore(cutoff)
         eventRepository.deleteOlderThan(cutoff)
         val evidenceDir = File(applicationContext.filesDir, Constants.DIR_EVIDENCE)
         val photos = cleanupDir(File(evidenceDir, "photos"), cutoff)

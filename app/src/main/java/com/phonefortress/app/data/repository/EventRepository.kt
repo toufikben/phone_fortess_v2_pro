@@ -38,6 +38,10 @@ class EventRepository @Inject constructor(
         dao.deleteOlderThan(timestamp)
     }
 
+    suspend fun clearEvidencePathsBefore(timestamp: Long) {
+        dao.clearEvidencePathsBefore(timestamp)
+    }
+
     suspend fun delete(eventId: String) {
         dao.deleteById(eventId)
     }

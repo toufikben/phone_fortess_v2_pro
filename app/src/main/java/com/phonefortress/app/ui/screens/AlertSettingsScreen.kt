@@ -15,6 +15,7 @@ import com.phonefortress.app.ui.viewmodel.AlertSettingsViewModel
 /**
  * شاشة إدارة قنوات التنبيه.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlertSettingsScreen(
     viewModel: AlertSettingsViewModel = hiltViewModel()

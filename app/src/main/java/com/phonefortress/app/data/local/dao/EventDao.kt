@@ -28,6 +28,9 @@ interface EventDao {
     @Query("DELETE FROM security_events WHERE timestamp < :before")
     suspend fun deleteOlderThan(before: Long)
 
+    @Query("UPDATE security_events SET photoPath = NULL, audioPath = NULL WHERE timestamp < :before")
+    suspend fun clearEvidencePathsBefore(before: Long)
+
     @Query("DELETE FROM security_events WHERE eventId = :eventId")
     suspend fun deleteById(eventId: String)
 }

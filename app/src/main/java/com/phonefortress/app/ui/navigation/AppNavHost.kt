@@ -10,9 +10,9 @@ import com.phonefortress.app.ui.screens.GeofenceScreen
 import com.phonefortress.app.ui.screens.HomeScreen
 import com.phonefortress.app.ui.screens.LogsScreen
 import com.phonefortress.app.ui.screens.LanguagePickerScreen
-import com.phonefortress.app.ui.screens.PinSetupScreen
 import com.phonefortress.app.ui.screens.SettingsScreen
 import com.phonefortress.app.ui.screens.ThemePickerScreen
+import com.phonefortress.app.ui.screens.pin.PinSetupScreen
 
 object Routes {
     const val HOME = "home"

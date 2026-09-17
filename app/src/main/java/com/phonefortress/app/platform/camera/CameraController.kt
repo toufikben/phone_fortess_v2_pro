@@ -38,7 +38,7 @@ class CameraController @Inject constructor(
 
     private var imageCapture: ImageCapture? = null
     private var cameraProvider: ProcessCameraProvider? = null
-    private val executor: ExecutorService = Executors.newSingleThreadExecutor()
+    private var executor: ExecutorService = Executors.newSingleThreadExecutor()
 
     /**
      * يلتقط صورة من الكاميرا الأمامية.
@@ -51,6 +51,7 @@ class CameraController @Inject constructor(
         outputDir: File
     ): File? = withContext(Dispatchers.IO) {
         try {
+            if (executor.isShutdown) executor = Executors.newSingleThreadExecutor()
             if (!outputDir.exists()) outputDir.mkdirs()
 
             val provider = getCameraProvider() ?: return@withContext null
@@ -139,6 +140,7 @@ class CameraController @Inject constructor(
             cameraProvider?.unbindAll()
             cameraProvider = null
             imageCapture = null
+            executor.shutdown()
         } catch (e: Exception) {
             Logger.e(e, "Camera release failed")
         }

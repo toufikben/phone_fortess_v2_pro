@@ -15,7 +15,7 @@ import com.phonefortress.app.util.Logger
 import java.util.concurrent.TimeUnit
 
 object WorkScheduler {
-    fun scheduleCaptureRetry(context: Context, eventId: String, attempt: Int = 0) {
+    private fun enqueueCaptureRetry(context: Context, eventId: String, attempt: Int) {
         val data = Data.Builder().putString(CaptureRetryWorker.KEY_EVENT_ID, eventId)
             .putInt(CaptureRetryWorker.KEY_ATTEMPT, attempt).build()
         val request = OneTimeWorkRequestBuilder<CaptureRetryWorker>()
@@ -30,8 +30,8 @@ object WorkScheduler {
         )
     }
 
-    fun scheduleCaptureRetryCheck(context: Context, eventId: String, attempt: Int) {
-        if (attempt < CaptureRetryWorker.MAX_ATTEMPTS) scheduleCaptureRetry(context, eventId, attempt)
+    fun scheduleCaptureRetry(context: Context, eventId: String, attempt: Int) {
+        if (attempt < CaptureRetryWorker.MAX_ATTEMPTS) enqueueCaptureRetry(context, eventId, attempt)
     }
 
     fun schedulePhotoCleanup(context: Context) {

@@ -21,7 +21,7 @@ fun AppThemeProvider(
 ) {
     val theme by viewModel.selectedTheme.collectAsStateWithLifecycle()
     val tokens = Themes.get(theme.id)
-    val colorScheme = rememberColorScheme(tokens)
+    val colorScheme = createColorScheme(tokens)
 
     CompositionLocalProvider(LocalThemeTokens provides tokens) {
         MaterialTheme(
@@ -33,7 +33,7 @@ fun AppThemeProvider(
 }
 
 @Composable
-private fun rememberColorScheme(tokens: ThemeTokens) = darkColorScheme(
+private fun createColorScheme(tokens: ThemeTokens) = darkColorScheme(
     primary = tokens.primary,
     onPrimary = tokens.background,
     primaryContainer = tokens.primaryGlow.copy(alpha = 0.2f),

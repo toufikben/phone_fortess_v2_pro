@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import com.android.billingclient.api.*
 import com.phonefortress.app.data.prefs.ProPrefs
-import com.phonefortress.app.util.Logger
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +34,7 @@ class BillingManager @Inject constructor(
     val products: StateFlow<List<ProductDetails>> = _products.asStateFlow()
     private val billingClient = BillingClient.newBuilder(context)
         .setListener(this)
-        .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().enablePrepaidPlans().build())
+        .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
         .build()
 
     fun connect() {
@@ -87,6 +86,16 @@ class BillingManager @Inject constructor(
 
     private fun handlePurchases(purchases: List<Purchase>) {
         val owned = purchases.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }.flatMap { it.products }.toSet()
+        purchases.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED && !it.isAcknowledged }
+            .forEach { purchase ->
+                billingClient.acknowledgePurchase(
+                    AcknowledgePurchaseParams.newBuilder().setPurchaseToken(purchase.purchaseToken).build()
+                ) { result ->
+                    if (result.responseCode != BillingClient.BillingResponseCode.OK) {
+                        _state.value = _state.value.copy(error = result.debugMessage)
+                    }
+                }
+            }
         scope.launch {
             proPrefs.setPurchasedProducts(owned)
             val tier = when {

@@ -12,12 +12,12 @@ import timber.log.Timber
 object Logger {
 
     private val SENSITIVE_PATTERNS = listOf(
-        Regex("(?i)password\\s*[:=]\\s*\\S+"),
-        Regex("(?i)token\\s*[:=]\\s*\\S+"),
-        Regex("(?i)api[_-]?key\\s*[:=]\\s*\\S+"),
-        Regex("(?i)lat\\s*[:=]\\s*[-\\d.]+"),
-        Regex("(?i)lng\\s*[:=]\\s*[-\\d.]+"),
-        Regex("(?i)authorization\\s*[:=]\\s*\\S+")
+        Regex("(?i)\\bpassword\\b\\s*[:=]\\s*\\S+"),
+        Regex("(?i)\\btoken\\b\\s*[:=]\\s*\\S+"),
+        Regex("(?i)\\bapi[_-]?key\\b\\s*[:=]\\s*\\S+"),
+        Regex("(?i)\\blat\\b\\s*[:=]\\s*[-\\d.]+"),
+        Regex("(?i)\\blng\\b\\s*[:=]\\s*[-\\d.]+"),
+        Regex("(?i)\\bauthorization\\b\\s*[:=]\\s*\\S+")
     )
 
     fun init(isDebug: Boolean) {

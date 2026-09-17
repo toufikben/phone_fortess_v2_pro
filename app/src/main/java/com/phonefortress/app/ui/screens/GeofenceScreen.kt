@@ -21,6 +21,7 @@ import com.phonefortress.app.ui.viewmodel.GeofenceViewModel
 /**
  * شاشة إدارة المناطق الجغرافية.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GeofenceScreen(
     viewModel: GeofenceViewModel = hiltViewModel()

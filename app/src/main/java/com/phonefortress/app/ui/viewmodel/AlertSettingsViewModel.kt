@@ -20,8 +20,7 @@ data class AlertSettingsState(
     val channels: List<ChannelUiModel> = emptyList(),
     val loading: Boolean = true,
     val lastTestResult: String? = null,
-    val lastTestSuccess: Boolean = false,
-    val testingChannelId: String? = null
+    val lastTestSuccess: Boolean = false
 )
 
 @HiltViewModel
@@ -83,7 +82,7 @@ class AlertSettingsViewModel @Inject constructor(
                 }
                 return@launch
             }
-            _state.update { it.copy(testingChannelId = id, lastTestResult = null) }
+            _state.update { it.copy(lastTestResult = null) }
             val success = runCatching {
                 val testEvent = SecurityEvent(
                     id = "test-${System.currentTimeMillis()}",
@@ -98,7 +97,6 @@ class AlertSettingsViewModel @Inject constructor(
             }.getOrDefault(false)
             _state.update {
                 it.copy(
-                    testingChannelId = null,
                     lastTestResult = if (success) "✓ نجح الإرسال" else "❌ فشل الإرسال",
                     lastTestSuccess = success
                 )

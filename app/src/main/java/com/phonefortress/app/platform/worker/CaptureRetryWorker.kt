@@ -39,7 +39,7 @@ class CaptureRetryWorker @AssistedInject constructor(
                 return Result.success()
             }
             CameraForegroundService.start(applicationContext, eventId, event.isTest)
-            WorkScheduler.scheduleCaptureRetryCheck(applicationContext, eventId, attempt + 1)
+            WorkScheduler.scheduleCaptureRetry(applicationContext, eventId, attempt + 1)
             Result.success()
         } catch (e: Exception) {
             Logger.e(e, "CaptureRetryWorker failed")

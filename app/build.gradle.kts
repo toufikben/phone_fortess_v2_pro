@@ -133,7 +133,6 @@ dependencies {
     implementation(libs.camera.core)
     implementation(libs.camera.camera2)
     implementation(libs.camera.lifecycle)
-    implementation(libs.camera.view)
 
     // Location
     implementation(libs.play.services.location)
