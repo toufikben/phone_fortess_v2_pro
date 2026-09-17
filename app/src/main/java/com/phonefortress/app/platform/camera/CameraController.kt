@@ -1,7 +1,9 @@
 package com.phonefortress.app.platform.camera
 
 import android.annotation.SuppressLint
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Size
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
@@ -51,6 +53,10 @@ class CameraController @Inject constructor(
         outputDir: File
     ): File? = withContext(Dispatchers.IO) {
         try {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                Logger.w("Camera permission not granted")
+                return@withContext null
+            }
             if (executor.isShutdown) executor = Executors.newSingleThreadExecutor()
             if (!outputDir.exists()) outputDir.mkdirs()
 

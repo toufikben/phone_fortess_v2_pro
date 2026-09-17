@@ -16,6 +16,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
@@ -28,7 +29,8 @@ data class HomeState(
     val uptimeText: String = "",
     val stats: HomeStats = HomeStats(),
     val lastEvent: SecurityEvent? = null,
-    val lastEventTimeAgo: String = ""
+    val lastEventTimeAgo: String = "",
+    val requiredProtectionPermissions: List<String> = emptyList()
 )
 
 data class HomeStats(
@@ -56,6 +58,7 @@ class HomeViewModel @Inject constructor(
         observeProtection()
         observeEvents()
         observeChannelStatus()
+        observeCapturePermissions()
         startUptimeTicker()
     }
 
@@ -68,7 +71,7 @@ class HomeViewModel @Inject constructor(
                 } else if (!active) {
                     protectionStartedAt = 0
                 }
-                _state.update { it.copy(isProtectionActive = active && adminActive, isDeviceAdminActive = adminActive) }
+                _state.update { it.copy(isProtectionActive = ProtectionStatePolicy.isActive(active, adminActive), isDeviceAdminActive = adminActive) }
             }
         }
     }
@@ -87,6 +90,16 @@ class HomeViewModel @Inject constructor(
                         )
                     )
                 }
+            }
+        }
+    }
+
+    private fun observeCapturePermissions() {
+        viewModelScope.launch {
+            combine(securityPrefs.capturePhoto, securityPrefs.captureAudio, securityPrefs.captureLocation) { photo, audio, location ->
+                ProtectionPermissions.required(photo, audio, location).toList()
+            }.collect { permissions ->
+                _state.update { it.copy(requiredProtectionPermissions = permissions) }
             }
         }
     }
@@ -136,16 +149,18 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             val requested = securityPrefs.protectionEnabled.first()
             val adminActive = isDeviceAdminActive()
-            _state.update { it.copy(isProtectionActive = requested && adminActive, isDeviceAdminActive = adminActive) }
+            _state.update { it.copy(isProtectionActive = ProtectionStatePolicy.isActive(requested, adminActive), isDeviceAdminActive = adminActive) }
         }
     }
 
     fun enableProtectionIfReady() {
         viewModelScope.launch {
-            if (isDeviceAdminActive()) securityPrefs.setProtectionEnabled(true)
+            if (ProtectionStatePolicy.canEnable(isDeviceAdminActive())) securityPrefs.setProtectionEnabled(true)
             refreshProtectionState()
         }
     }
+
+    fun isDeviceAdminActiveNow(): Boolean = isDeviceAdminActive()
 
     private fun isDeviceAdminActive(): Boolean {
         val manager = context.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager

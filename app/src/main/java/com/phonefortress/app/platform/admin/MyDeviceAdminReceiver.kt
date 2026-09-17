@@ -1,6 +1,8 @@
 package com.phonefortress.app.platform.admin
 
 import android.app.admin.DeviceAdminReceiver
+import android.app.admin.DevicePolicyManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import com.phonefortress.app.geofence.ZoneStateHolder
@@ -30,7 +32,7 @@ class MyDeviceAdminReceiver : DeviceAdminReceiver() {
         super.onPasswordFailed(context, intent)
         scope.launch {
             try {
-                if (!securityPrefs.protectionEnabled.first()) return@launch
+                if (!securityPrefs.protectionEnabled.first() || !isAdminActive(context)) return@launch
                 val configuredThreshold = securityPrefs.threshold.first()
                 val effectiveThreshold = zoneState.effectiveThreshold(configuredThreshold)
                 val triggeringAttempts = securityPrefs.incrementAttemptsAndCheckThreshold(effectiveThreshold)
@@ -63,5 +65,11 @@ class MyDeviceAdminReceiver : DeviceAdminReceiver() {
         super.onDisabled(context, intent)
         Logger.i("Device Admin disabled")
         scope.launch { runCatching { securityPrefs.setProtectionEnabled(false) } }
+    }
+
+    private fun isAdminActive(context: Context): Boolean {
+        val manager = context.getSystemService(Context.DEVICE_POLICY_SERVICE) as? DevicePolicyManager
+            ?: return false
+        return manager.isAdminActive(ComponentName(context, MyDeviceAdminReceiver::class.java))
     }
 }

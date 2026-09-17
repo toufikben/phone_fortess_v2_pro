@@ -60,8 +60,14 @@ fun HomeScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val tokens = LocalThemeTokens.current
     val context = LocalContext.current
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+        if (result.values.all { it }) viewModel.enableProtectionIfReady() else viewModel.refreshProtectionState()
+    }
     val adminLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        viewModel.enableProtectionIfReady()
+        if (viewModel.isDeviceAdminActiveNow()) {
+            if (state.requiredProtectionPermissions.isEmpty()) viewModel.enableProtectionIfReady()
+            else permissionLauncher.launch(state.requiredProtectionPermissions.toTypedArray())
+        } else viewModel.refreshProtectionState()
     }
     LaunchedEffect(Unit) { viewModel.refreshProtectionState() }
 
@@ -93,6 +99,9 @@ fun HomeScreen(
                                 putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, component)
                                 putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "يحتاج Phone Fortress إلى Device Admin لرصد محاولات فتح القفل الفاشلة.")
                             })
+                        } else if (!state.isProtectionActive) {
+                            if (state.requiredProtectionPermissions.isEmpty()) viewModel.enableProtectionIfReady()
+                            else permissionLauncher.launch(state.requiredProtectionPermissions.toTypedArray())
                         } else viewModel.toggleProtection()
                     },
                 modifier = Modifier.fillMaxWidth(0.7f).height(52.dp),

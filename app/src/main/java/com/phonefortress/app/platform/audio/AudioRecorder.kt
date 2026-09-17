@@ -1,10 +1,13 @@
 package com.phonefortress.app.platform.audio
 
 import android.content.Context
+import android.Manifest
+import android.content.pm.PackageManager
 import android.media.MediaRecorder
 import android.os.Build
 import com.phonefortress.app.util.Constants
 import com.phonefortress.app.util.Logger
+import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -34,6 +37,10 @@ class AudioRecorder @Inject constructor(
     suspend fun recordShort(outputDir: File, durationMs: Long = Constants.AUDIO_DURATION_MS): File? =
         withContext(Dispatchers.IO) {
             try {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                    Logger.w("Microphone permission not granted")
+                    return@withContext null
+                }
                 if (!outputDir.exists()) outputDir.mkdirs()
 
                 val file = File(

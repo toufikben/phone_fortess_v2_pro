@@ -33,6 +33,8 @@ object Constants {
     // Timeouts (ms)
     const val CAMERA_TIMEOUT_MS = 15_000L
     const val LOCATION_TIMEOUT_MS = 10_000L
+    const val MAX_LOCATION_AGE_MS = 60_000L
+    const val MAX_LOCATION_ACCURACY_METERS = 100f
     const val AUDIO_DURATION_MS = 10_000L
 
     // Thresholds

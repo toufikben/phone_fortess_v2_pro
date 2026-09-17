@@ -109,8 +109,31 @@ class CameraForegroundService : Service(), LifecycleOwner {
         val evidenceDir = File(filesDir, Constants.DIR_EVIDENCE).apply { mkdirs() }
         val photosDir = File(evidenceDir, "photos").apply { mkdirs() }
         val audioDir = File(evidenceDir, "audio").apply { mkdirs() }
-        if (securityPrefs.capturePhoto.first()) withTimeoutOrNull(Constants.CAMERA_TIMEOUT_MS) { cameraController.captureFrontPhoto(this@CameraForegroundService, photosDir) }?.let { event = event.copy(photoPath = it.absolutePath) }
-        if (securityPrefs.captureAudio.first()) withTimeoutOrNull(Constants.AUDIO_DURATION_MS + 5_000L) { audioRecorder.recordShort(audioDir) }?.let { event = event.copy(audioPath = it.absolutePath) }
+        val photoEnabled = securityPrefs.capturePhoto.first()
+        val photo = if (photoEnabled) {
+            event.photoPath?.let { File(it).takeIf(File::exists) } ?: withTimeoutOrNull(Constants.CAMERA_TIMEOUT_MS) {
+                cameraController.captureFrontPhoto(this@CameraForegroundService, photosDir)
+            }
+        } else null
+        if (photoEnabled && photo == null) {
+            eventRepository.updateMetadata(event)
+            markCaptureRetryable(eventId, "photo-capture-failed")
+            return
+        }
+        photo?.let { event = event.copy(photoPath = it.absolutePath) }
+
+        val audioEnabled = securityPrefs.captureAudio.first()
+        val audio = if (audioEnabled) {
+            event.audioPath?.let { File(it).takeIf(File::exists) } ?: withTimeoutOrNull(Constants.AUDIO_DURATION_MS + 5_000L) {
+                audioRecorder.recordShort(audioDir)
+            }
+        } else null
+        if (audioEnabled && audio == null) {
+            eventRepository.updateMetadata(event)
+            markCaptureRetryable(eventId, "audio-capture-failed")
+            return
+        }
+        audio?.let { event = event.copy(audioPath = it.absolutePath) }
         if (securityPrefs.captureLocation.first()) withTimeoutOrNull(Constants.LOCATION_TIMEOUT_MS + 2_000L) { locationProvider.getCurrentLocation() }?.let { event = event.copy(latitude = it.latitude, longitude = it.longitude, locationAccuracy = it.accuracy) }
         eventRepository.updateMetadata(event)
         event = eventRepository.transition(eventId, SecurityEventStatus.CAPTURED, "capture-complete", EventOperation.CAPTURE) ?: return
@@ -118,6 +141,11 @@ class CameraForegroundService : Service(), LifecycleOwner {
         event = eventRepository.transition(eventId, SecurityEventStatus.SEND_PENDING, "dispatch-ready", EventOperation.SEND) ?: return
         WorkScheduler.dispatchEventNow(applicationContext, eventId)
         cameraController.release()
+    }
+
+    private suspend fun markCaptureRetryable(eventId: String, reason: String) {
+        eventRepository.transition(eventId, SecurityEventStatus.FAILED_RETRYABLE, reason, EventOperation.CAPTURE)
+        WorkScheduler.scheduleCaptureRetry(applicationContext, eventId, 1)
     }
 
     private fun startForegroundWithNotification(photo: Boolean, audio: Boolean, location: Boolean) {
