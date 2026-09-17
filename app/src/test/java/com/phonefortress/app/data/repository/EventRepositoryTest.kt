@@ -6,6 +6,7 @@ import com.phonefortress.app.domain.model.SecurityEvent
 import com.phonefortress.app.domain.model.SecurityEventStatus
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.first
@@ -28,5 +29,5 @@ class EventRepositoryTest {
     }
     @Test fun `update status delegates to dao`() = runTest { repo.updateStatus("evt-1", SecurityEventStatus.SENT); coVerify { dao.updateStatus("evt-1", "SENT") } }
     @Test fun `active events are mapped`() = runTest { coEvery { dao.getActive() } returns emptyList(); assertThat(repo.getActive()).isEmpty() }
-    @Test fun `observe recent maps empty flow`() = runTest { coEvery { dao.observeRecent(50) } returns flowOf(emptyList()); assertThat(repo.observeRecent().first()).isEmpty() }
+    @Test fun `observe recent maps empty flow`() = runTest { every { dao.observeRecent(50) } returns flowOf(emptyList()); assertThat(repo.observeRecent().first()).isEmpty() }
 }
