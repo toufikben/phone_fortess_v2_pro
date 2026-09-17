@@ -30,6 +30,10 @@
 # MediaPipe
 -keep class com.google.mediapipe.** { *; }
 
+# Google Play Services Location D8 warning
+-dontwarn com.google.android.gms.internal.location.**
+-keep class com.google.android.gms.internal.location.** { *; }
+
 # Remove logs in release
 -assumenosideeffects class android.util.Log {
     public static *** d(...);

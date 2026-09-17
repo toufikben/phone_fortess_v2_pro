@@ -1,71 +1,97 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Forteresse Téléphonique</string>
+
+    <!-- Channels -->
     <string name="channel_protection_name">État de protection</string>
     <string name="channel_protection_desc">Indique que la protection est active</string>
     <string name="channel_alerts_name">Alertes de sécurité</string>
-    <string name="channel_alerts_desc">Alertes d'intrusion et preuves</string>
+    <string name="channel_alerts_desc">"Alertes d'intrusion et preuves"</string>
     <string name="channel_silent_name">Opérations silencieuses</string>
     <string name="channel_silent_desc">Opérations en arrière-plan silencieuses</string>
-    <string name="capturing_evidence_title">Capture de preuves…</string>
-    <string name="capturing_evidence_body">Phone Fortress collecte des preuves</string>
+
+    <!-- Protection -->
     <string name="protection_active">Protection active</string>
     <string name="protection_inactive">Protection désactivée</string>
+    <string name="capturing_evidence_title">Capture de preuves…</string>
+    <string name="capturing_evidence_body">Phone Fortress collecte des preuves</string>
+
+    <!-- Threat -->
     <string name="threat_score_title">Score de menace</string>
     <string name="threat_reasons">Raisons</string>
     <string name="threat_level_low">Faible</string>
     <string name="threat_level_medium">Moyen</string>
     <string name="threat_level_high">Élevé</string>
     <string name="threat_level_critical">Critique</string>
+
+    <!-- Geofence -->
     <string name="geofence_title">Zones intelligentes</string>
     <string name="geofence_add">Ajouter une zone</string>
-    <string name="geofence_empty">Aucune zone pour l'instant</string>
+    <string name="geofence_empty">"Aucune zone pour l'instant"</string>
+
+    <!-- Settings -->
     <string name="settings_title">Paramètres</string>
     <string name="settings_theme">Identité visuelle</string>
     <string name="settings_pin">Verrouillage (PIN)</string>
+    <string name="settings_language">Langue</string>
+    <string name="settings_diagnostics">Diagnostic</string>
+    <string name="settings_pro">Phone Fortress Pro</string>
+    <string name="settings_about">À propos</string>
+
+    <!-- Theme -->
     <string name="theme_picker_title">Identité visuelle</string>
     <string name="theme_picker_hint">Choisissez un thème. Les changements sont instantanés.</string>
+
+    <!-- Language -->
+    <string name="language_picker_title">Langue</string>
+    <string name="language_picker_hint">Sélectionnez votre langue préférée</string>
+
+    <!-- PIN -->
     <string name="pin_enter">Entrez le PIN</string>
     <string name="pin_wrong">PIN incorrect</string>
     <string name="pin_locked">Verrouillé</string>
+    <string name="pin_biometric">Biométrie</string>
     <string name="pin_setup_new">Créer un PIN</string>
     <string name="pin_setup_confirm">Confirmer le PIN</string>
     <string name="pin_setup_mismatch">Les PIN ne correspondent pas</string>
     <string name="security_biometric">Déverrouillage biométrique</string>
     <string name="security_auto_lock">Verrouillage auto</string>
+
+    <!-- Diagnostics -->
     <string name="diagnostics_title">Diagnostic</string>
-    <string name="diagnostics_workers">Tâches d'arrière-plan</string>
-    <string name="worker_state_running">Running</string>
-    <string name="worker_state_enqueued">Enqueued</string>
-    <string name="worker_state_succeeded">Succeeded</string>
-    <string name="worker_state_failed">Failed</string>
+    <string name="diagnostics_workers">"Tâches d'arrière-plan"</string>
+    <string name="worker_state_running">En cours</string>
+    <string name="worker_state_enqueued">En attente</string>
+    <string name="worker_state_succeeded">Réussi</string>
+    <string name="worker_state_failed">Échoué</string>
+
+    <!-- Pro / IAP -->
     <string name="pro_title">Phone Fortress Pro</string>
-    <string name="pro_subtitle">Unlock all features</string>
-    <string name="pro_subscribe">S'abonner</string>
+    <string name="pro_subtitle">Débloquez toutes les fonctionnalités</string>
+    <string name="pro_subscribe">"S'abonner"</string>
     <string name="pro_restore">Restaurer les achats</string>
-    <string name="pro_manage">Manage subscription</string>
-    <string name="settings_language">Language</string>
-    <string name="settings_diagnostics">Diagnostics</string>
-    <string name="settings_pro">Phone Fortress Pro</string>
-    <string name="settings_about">About</string>
-    <string name="language_picker_title">Language</string>
-    <string name="language_picker_hint">Select your preferred language</string>
-    <string name="pin_biometric">Biometric</string>
-    <string name="alert_channels_title">Alert Channels</string>
-    <string name="alert_test_success">✓ Sent successfully</string>
-    <string name="alert_test_failed">❌ Failed to send</string>
-    <string name="alert_not_configured">⚠ Not configured</string>
-    <string name="logs_title">Event Log</string>
-    <string name="logs_empty">No events yet</string>
-    <string name="logs_export">Export</string>
-    <string name="logs_filter">Filter</string>
-    <string name="common_save">Save</string>
-    <string name="common_cancel">Cancel</string>
-    <string name="common_delete">Delete</string>
-    <string name="common_edit">Edit</string>
+    <string name="pro_manage">Gérer l'abonnement</string>
+
+    <!-- Alerts -->
+    <string name="alert_channels_title">Canaux d'alerte</string>
+    <string name="alert_test_success">✓ Envoyé avec succès</string>
+    <string name="alert_test_failed">❌ Échec de l'envoi</string>
+    <string name="alert_not_configured">⚠ Non configuré</string>
+
+    <!-- Logs -->
+    <string name="logs_title">Journal d'événements</string>
+    <string name="logs_empty">Aucun événement</string>
+    <string name="logs_export">Exporter</string>
+    <string name="logs_filter">Filtrer</string>
+
+    <!-- Common -->
+    <string name="common_save">Enregistrer</string>
+    <string name="common_cancel">Annuler</string>
+    <string name="common_delete">Supprimer</string>
+    <string name="common_edit">Modifier</string>
     <string name="common_ok">OK</string>
-    <string name="common_back">Back</string>
-    <string name="common_loading">Loading…</string>
-    <string name="common_error">Something went wrong</string>
-    <string name="common_retry">Retry</string>
+    <string name="common_back">Retour</string>
+    <string name="common_loading">Chargement…</string>
+    <string name="common_error">Une erreur est survenue</string>
+    <string name="common_retry">Réessayer</string>
 </resources>
