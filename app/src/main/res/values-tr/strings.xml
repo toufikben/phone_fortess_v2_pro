@@ -77,9 +77,9 @@
     <string name="pin_setup_title">Uygulama kilidi kurulumu</string>
     <string name="pin_setup_hint">Uygulamayı ve etkinlik kayıtlarını korumak için bir PIN oluşturun.</string>
     <string name="pin_new">Yeni PIN</string>
-    <string name="pin_confirm">PIN'i onayla</string>
-    <string name="pin_save">PIN'i kaydet</string>
-    <string name="pin_gate_title">Güvenlik PIN'inizi girin</string>
+    <string name="pin_confirm">PIN kodunu onayla</string>
+    <string name="pin_save">PIN kodunu kaydet</string>
+    <string name="pin_gate_title">Güvenlik PIN kodunuzu girin</string>
     <string name="pin_lockout_remaining">Geçici olarak kilitli · %s saniye</string>
     <string name="app_brand">PHONE FORTRESS</string>
     <string name="app_version">v2.0.0</string>

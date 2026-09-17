@@ -44,7 +44,7 @@
     <string name="protection_enable">Attiva protezione</string>
     <string name="protection_disable">Disattiva protezione</string>
     <string name="protection_enabled_status">La protezione è attiva e in esecuzione</string>
-    <string name="protection_admin_required">È necessario abilitare l'amministratore del dispositivo</string>
+    <string name="protection_admin_required">È necessario abilitare l’amministratore del dispositivo</string>
     <string name="protection_permissions_required">Mancano le autorizzazioni necessarie per la cattura</string>
     <string name="protection_disabled_status">Protezione disattivata — tocca per attivarla</string>
     <string name="protection_disable_confirm_title">Disattivare la protezione?</string>
@@ -75,7 +75,7 @@
     <string name="diagnostics_attempts">Tentativi: %s</string>
     <string name="geofence_hint">Aggiungi una zona sicura o una zona a rischio per regolare automaticamente la sensibilità.</string>
     <string name="pin_setup_title">Configurazione blocco app</string>
-    <string name="pin_setup_hint">Crea un PIN per proteggere l'app e i registri degli eventi.</string>
+    <string name="pin_setup_hint">Crea un PIN per proteggere l’app e i registri degli eventi.</string>
     <string name="pin_new">Nuovo PIN</string>
     <string name="pin_confirm">Conferma PIN</string>
     <string name="pin_save">Salva PIN</string>

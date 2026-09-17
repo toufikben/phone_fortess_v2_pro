@@ -4,7 +4,7 @@
     <string name="channel_protection_name">État de protection</string>
     <string name="channel_protection_desc">Indique que la protection est active</string>
     <string name="channel_alerts_name">Alertes de sécurité</string>
-    <string name="channel_alerts_desc">"Alertes d'intrusion et preuves"</string>
+    <string name="channel_alerts_desc">"Alertes d’intrusion et preuves"</string>
     <string name="channel_silent_name">Opérations silencieuses</string>
     <string name="channel_silent_desc">Opérations en arrière-plan silencieuses</string>
     <string name="protection_active">Protection active</string>
@@ -14,7 +14,7 @@
     <string name="threat_score_title">Score de menace</string>
     <string name="geofence_title">Zones intelligentes</string>
     <string name="geofence_add">Ajouter une zone</string>
-    <string name="geofence_empty">"Aucune zone pour l'instant"</string>
+    <string name="geofence_empty">"Aucune zone pour l’instant"</string>
     <string name="settings_title">Paramètres</string>
     <string name="settings_theme">Identité visuelle</string>
     <string name="settings_pin">Verrouillage (PIN)</string>
@@ -29,9 +29,9 @@
     <string name="security_biometric">Déverrouillage biométrique</string>
     <string name="security_auto_lock">Verrouillage auto</string>
     <string name="diagnostics_title">Diagnostic</string>
-    <string name="diagnostics_workers">"Tâches d'arrière-plan"</string>
-    <string name="alert_channels_title">"Canaux d'alerte"</string>
-    <string name="logs_title">"Journal d'événements"</string>
+    <string name="diagnostics_workers">"Tâches d’arrière-plan"</string>
+    <string name="alert_channels_title">"Canaux d’alerte"</string>
+    <string name="logs_title">"Journal d’événements"</string>
     <string name="logs_empty">Aucun événement</string>
     <string name="common_cancel">Annuler</string>
     <string name="common_delete">Supprimer</string>
@@ -44,13 +44,13 @@
     <string name="protection_enable">Activer la protection</string>
     <string name="protection_disable">Désactiver la protection</string>
     <string name="protection_enabled_status">La protection est activée et fonctionne</string>
-    <string name="protection_admin_required">Activation de l'administrateur de l'appareil requise</string>
+    <string name="protection_admin_required">Activation de l’administrateur de l’appareil requise</string>
     <string name="protection_permissions_required">Les autorisations de capture requises sont manquantes</string>
     <string name="protection_disabled_status">La protection est désactivée — appuyez pour activer</string>
     <string name="protection_disable_confirm_title">Arrêter la protection ?</string>
     <string name="protection_disable_confirm_body">La surveillance et les alertes s’arrêteront jusqu’à réactivation.</string>
-    <string name="event_detail_title">Détails de l'événement</string>
-    <string name="event_detail_missing">Cet événement n'est plus disponible.</string>
+    <string name="event_detail_title">Détails de l’événement</string>
+    <string name="event_detail_missing">Cet événement n’est plus disponible.</string>
     <string name="event_detail_status">Statut : %s</string>
     <string name="event_detail_time">Heure : %s</string>
     <string name="event_detail_operation">Opération : %s</string>
@@ -60,7 +60,7 @@
     <string name="event_status_deferred">Différé</string>
     <string name="event_status_in_progress">En cours</string>
     <string name="event_status_captured">Capturé</string>
-    <string name="event_status_send_pending">En attente d'envoi</string>
+    <string name="event_status_send_pending">En attente d’envoi</string>
     <string name="event_status_sent">Envoyé</string>
     <string name="event_status_failed_retryable">Échec temporaire — réessai prévu</string>
     <string name="event_status_failed_final">Échec définitif</string>
