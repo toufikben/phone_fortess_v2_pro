@@ -222,10 +222,15 @@ class CameraForegroundService : Service(), LifecycleOwner {
 
         event = SecurityEventStateMachine.transition(event, finalStatus)
         eventRepository.save(event)
-        if (finalStatus == SecurityEventStatus.FAILED_RETRYABLE) {
-            WorkScheduler.scheduleCaptureRetry(applicationContext, eventId)
+        when (finalStatus) {
+            SecurityEventStatus.FAILED_RETRYABLE -> {
+                WorkScheduler.scheduleCaptureRetry(applicationContext, eventId, 0)
+                Logger.i("Scheduled retry for $eventId")
+            }
+            SecurityEventStatus.SENT -> Logger.i("Event $eventId delivered successfully")
+            else -> Logger.w("Event $eventId ended with $finalStatus")
         }
-        Logger.i("Event $eventId finished with status $finalStatus")
+        Logger.i("Event $eventId finished: $finalStatus")
     }
 
     private fun startForegroundWithNotification() {

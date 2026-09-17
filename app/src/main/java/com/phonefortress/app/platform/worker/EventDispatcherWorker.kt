@@ -7,7 +7,6 @@ import androidx.work.WorkerParameters
 import com.phonefortress.app.alerts.AlertDispatcher
 import com.phonefortress.app.data.repository.EventRepository
 import com.phonefortress.app.domain.model.AlertResult
-import com.phonefortress.app.domain.model.SecurityEvent
 import com.phonefortress.app.domain.model.SecurityEventStatus
 import com.phonefortress.app.domain.state.SecurityEventStateMachine
 import com.phonefortress.app.util.Logger
@@ -36,8 +35,7 @@ class EventDispatcherWorker @AssistedInject constructor(
         if (SecurityEventStateMachine.isTerminal(event.status)) return true
         val results = alertDispatcher.dispatch(event)
         val finalStatus = computeFinalStatus(results)
-        val updated = SecurityEventStateMachine.transition(event, finalStatus)
-        eventRepository.save(updated)
+        eventRepository.updateStatus(eventId, finalStatus)
         return finalStatus == SecurityEventStatus.SENT
     }
 
