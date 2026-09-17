@@ -48,6 +48,9 @@ jobs:
       - name: Verify security configuration
         run: python3 tools/verify_security_configuration.py
 
+      - name: Verify reliability configuration
+        run: python3 tools/verify_reliability_configuration.py
+
       - name: Build and test all release variants
         run: ./gradlew clean testDebugUnitTest assembleDebug assembleRelease bundleRelease --no-daemon --stacktrace
 

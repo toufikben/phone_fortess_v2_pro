@@ -14,43 +14,34 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * مستقبل Geofence — يعالج أحداث الدخول/الخروج.
- * يُحدّث الحالة الحالية (داخل/خارج المناطق).
- */
+/** Handles geofence transitions while holding the broadcast lifecycle lease. */
 @AndroidEntryPoint
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
-
     @Inject lateinit var safeZoneRepository: SafeZoneRepository
     @Inject lateinit var zoneState: ZoneStateHolder
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
     override fun onReceive(context: Context, intent: Intent) {
         val event = GeofencingEvent.fromIntent(intent) ?: return
-
         if (event.hasError()) {
-            Logger.e(null, "Geofence error: ${event.errorCode}")
+            Logger.e(null, "Geofence error")
             return
         }
-
         val transitionType = event.geofenceTransition
         val triggeringGeofences = event.triggeringGeofences ?: return
-
-        scope.launch {
+        val pendingResult = goAsync()
+        CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
             try {
                 triggeringGeofences.forEach { geofence ->
                     val zoneId = geofence.requestId.removePrefix("pf_zone_")
                     val zone = safeZoneRepository.getById(zoneId) ?: return@forEach
-
                     when (transitionType) {
                         Geofence.GEOFENCE_TRANSITION_ENTER -> {
-                            Logger.i("Entered zone: ${zone.name} (${zone.type})")
+                            Logger.i("Entered zone")
                             zoneState.setCurrentZone(zone)
                             zoneState.setInSafeZone(zone.type == com.phonefortress.app.domain.model.ZoneType.SAFE)
                         }
                         Geofence.GEOFENCE_TRANSITION_EXIT -> {
-                            Logger.i("Exited zone: ${zone.name}")
+                            Logger.i("Exited zone")
                             if (zoneState.getCurrentZone()?.id == zone.id) {
                                 zoneState.setCurrentZone(null)
                                 zoneState.setInSafeZone(null)
@@ -60,6 +51,8 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                 }
             } catch (e: Exception) {
                 Logger.e(e, "Geofence event handling failed")
+            } finally {
+                pendingResult.finish()
             }
         }
     }

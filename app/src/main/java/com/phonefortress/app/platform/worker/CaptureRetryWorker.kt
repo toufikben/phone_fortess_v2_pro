@@ -20,17 +20,15 @@ class CaptureRetryWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
     companion object {
         const val KEY_EVENT_ID = "event_id"
-        const val KEY_ATTEMPT = "attempt_number"
         const val MAX_ATTEMPTS = 3
     }
 
     override suspend fun doWork(): Result {
         val eventId = inputData.getString(KEY_EVENT_ID)
             ?: return Result.failure().also { Logger.w("CaptureRetryWorker: missing eventId") }
-        val attempt = inputData.getInt(KEY_ATTEMPT, 0)
         val event = eventRepository.getById(eventId) ?: return Result.failure()
         if (event.status == SecurityEventStatus.SENT || event.status == SecurityEventStatus.FAILED_FINAL || event.status == SecurityEventStatus.CANCELLED) return Result.success()
-        if (attempt >= MAX_ATTEMPTS) {
+        if (event.retryCount >= MAX_ATTEMPTS) {
             eventRepository.transition(eventId, SecurityEventStatus.FAILED_FINAL, "retry-budget-exhausted", event.operation)
             return Result.failure()
         }

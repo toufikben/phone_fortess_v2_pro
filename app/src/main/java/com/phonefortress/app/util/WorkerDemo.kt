@@ -18,6 +18,6 @@ class WorkerDemo @Inject constructor(
     }
 
     fun triggerRetryFor(eventId: String) {
-        WorkScheduler.scheduleCaptureRetry(context, eventId, 0)
+        WorkScheduler.scheduleCaptureRetry(context, eventId)
     }
 }

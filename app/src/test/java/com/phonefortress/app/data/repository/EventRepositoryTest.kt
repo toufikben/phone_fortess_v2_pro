@@ -31,9 +31,9 @@ class EventRepositoryTest {
     @Test fun `transition persists only legal state changes`() = runTest {
         val pending = SecurityEventEntity.fromDomain(SecurityEvent("evt-1", 100L, 2, 3))
         coEvery { dao.getById("evt-1") } returns pending
-        coEvery { dao.transitionStatus("evt-1", "PENDING", "IN_PROGRESS", "CAPTURE", "test") } returns 1
+        coEvery { dao.transitionStatus("evt-1", "PENDING", "IN_PROGRESS", "CAPTURE", "test", any()) } returns 1
         repo.transition("evt-1", SecurityEventStatus.IN_PROGRESS, "test")
-        coVerify { dao.transitionStatus("evt-1", "PENDING", "IN_PROGRESS", "CAPTURE", "test") }
+        coVerify { dao.transitionStatus("evt-1", "PENDING", "IN_PROGRESS", "CAPTURE", "test", any()) }
     }
     @Test fun `metadata update delegates without changing status`() = runTest {
         repo.updateMetadata(SecurityEvent("evt-1", 100L, 2, 3, photoPath = "/tmp/photo.jpg"))
@@ -41,8 +41,21 @@ class EventRepositoryTest {
     }
     @Test fun `conditional transition loss does not report a claimed event`() = runTest {
         coEvery { dao.getById("evt-1") } returns SecurityEventEntity.fromDomain(SecurityEvent("evt-1", 100L, 2, 3))
-        coEvery { dao.transitionStatus(any(), any(), any(), any(), any()) } returns 0
+        coEvery { dao.transitionStatus(any(), any(), any(), any(), any(), any()) } returns 0
         assertThat(repo.transition("evt-1", SecurityEventStatus.IN_PROGRESS, "lost-race")).isNull()
+    }
+    @Test fun `retryable transition persists through the conditional update`() = runTest {
+        coEvery { dao.getById("evt-1") } returns SecurityEventEntity.fromDomain(
+            SecurityEvent("evt-1", 100L, 2, 3, status = SecurityEventStatus.IN_PROGRESS)
+        )
+        coEvery { dao.transitionStatus(any(), any(), any(), any(), any(), any()) } returns 1
+        repo.transition("evt-1", SecurityEventStatus.FAILED_RETRYABLE, "capture-failed")
+        coVerify { dao.transitionStatus("evt-1", "IN_PROGRESS", "FAILED_RETRYABLE", "CAPTURE", "capture-failed", any()) }
+    }
+    @Test fun `send claim reports only the winning worker`() = runTest {
+        coEvery { dao.claimSend("evt-1", 1_000L, any()) } returns 1
+        assertThat(repo.claimForSend("evt-1", 1_000L)).isTrue()
+        coVerify { dao.claimSend("evt-1", 1_000L, any()) }
     }
     @Test fun `active events are mapped`() = runTest { coEvery { dao.getActive() } returns emptyList(); assertThat(repo.getActive()).isEmpty() }
     @Test fun `observe recent maps empty flow`() = runTest { every { dao.observeRecent(50) } returns flowOf(emptyList()); assertThat(repo.observeRecent().first()).isEmpty() }

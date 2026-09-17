@@ -28,6 +28,9 @@ data class SecurityEventEntity(
     val status: String,
     val operation: String,
     val lastTransitionReason: String?,
+    val retryCount: Int,
+    val lastTransitionAt: Long,
+    val sendClaimedAt: Long?,
     val isTest: Boolean
 ) {
     fun toDomain() = SecurityEvent(
@@ -38,7 +41,8 @@ data class SecurityEventEntity(
         threatReasons = threatReasons.split("|||").filter(String::isNotBlank),
         status = runCatching { SecurityEventStatus.valueOf(status) }.getOrDefault(SecurityEventStatus.PENDING),
         operation = runCatching { EventOperation.valueOf(operation) }.getOrDefault(EventOperation.CAPTURE),
-        lastTransitionReason = lastTransitionReason, isTest = isTest
+        lastTransitionReason = lastTransitionReason, retryCount = retryCount,
+        lastTransitionAt = lastTransitionAt, sendClaimedAt = sendClaimedAt, isTest = isTest
     )
 
     companion object {
@@ -48,7 +52,9 @@ data class SecurityEventEntity(
             latitude = e.latitude, longitude = e.longitude, locationAccuracy = e.locationAccuracy,
             threatScore = e.threatScore, threatLevel = e.threatLevel.name,
             threatReasons = e.threatReasons.joinToString("|||"), status = e.status.name,
-            operation = e.operation.name, lastTransitionReason = e.lastTransitionReason, isTest = e.isTest
+            operation = e.operation.name, lastTransitionReason = e.lastTransitionReason,
+            retryCount = e.retryCount, lastTransitionAt = e.lastTransitionAt,
+            sendClaimedAt = e.sendClaimedAt, isTest = e.isTest
         )
     }
 }

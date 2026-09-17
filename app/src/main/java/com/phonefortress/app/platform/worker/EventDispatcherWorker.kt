@@ -21,13 +21,16 @@ class EventDispatcherWorker @AssistedInject constructor(
     private val eventRepository: EventRepository,
     private val alertDispatcher: AlertDispatcher
 ) : CoroutineWorker(context, params) {
-    companion object { const val KEY_EVENT_ID = "specific_event_id" }
+    companion object {
+        const val KEY_EVENT_ID = "specific_event_id"
+        const val MAX_ATTEMPTS = 3
+    }
 
     override suspend fun doWork(): Result {
         return try {
             eventRepository.getStaleInProgress(System.currentTimeMillis() - 5 * 60_000L)
                 .filter { it.operation == EventOperation.CAPTURE }
-                .forEach { WorkScheduler.scheduleCaptureRetry(applicationContext, it.id, 1) }
+                .forEach { WorkScheduler.scheduleCaptureRetry(applicationContext, it.id) }
             val ids = inputData.getString(KEY_EVENT_ID)?.let { listOf(it) }
             val events = ids?.mapNotNull { eventRepository.getById(it) } ?: eventRepository.getDispatchable()
             var retryable = false
@@ -54,6 +57,12 @@ class EventDispatcherWorker @AssistedInject constructor(
                 eventRepository.transition(initial.id, SecurityEventStatus.SEND_PENDING, "send-retry", EventOperation.SEND)
             else -> return DispatchOutcome.SKIPPED
         } ?: return DispatchOutcome.SKIPPED
+
+        if (event.retryCount >= MAX_ATTEMPTS) {
+            eventRepository.transition(event.id, SecurityEventStatus.FAILED_FINAL, "retry-budget-exhausted", EventOperation.SEND)
+            return DispatchOutcome.FAILED
+        }
+        if (!eventRepository.claimForSend(event.id)) return DispatchOutcome.SKIPPED
 
         val results = alertDispatcher.dispatch(event)
         return when {

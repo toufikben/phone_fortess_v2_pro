@@ -18,9 +18,8 @@ object WorkScheduler {
     private fun captureRetryName(eventId: String) = "retry_capture_$eventId"
     private fun sendWorkName(eventId: String) = "send_$eventId"
 
-    private fun enqueueCaptureRetry(context: Context, eventId: String, attempt: Int) {
-        val data = Data.Builder().putString(CaptureRetryWorker.KEY_EVENT_ID, eventId)
-            .putInt(CaptureRetryWorker.KEY_ATTEMPT, attempt).build()
+    private fun enqueueCaptureRetry(context: Context, eventId: String) {
+        val data = Data.Builder().putString(CaptureRetryWorker.KEY_EVENT_ID, eventId).build()
         val request = OneTimeWorkRequestBuilder<CaptureRetryWorker>()
             .setInputData(data)
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.NOT_REQUIRED).build())
@@ -33,8 +32,8 @@ object WorkScheduler {
         )
     }
 
-    fun scheduleCaptureRetry(context: Context, eventId: String, attempt: Int) {
-        if (attempt < CaptureRetryWorker.MAX_ATTEMPTS) enqueueCaptureRetry(context, eventId, attempt)
+    fun scheduleCaptureRetry(context: Context, eventId: String) {
+        enqueueCaptureRetry(context, eventId)
     }
 
     fun schedulePhotoCleanup(context: Context) {
@@ -65,6 +64,10 @@ object WorkScheduler {
         WorkManager.getInstance(context).enqueueUniqueWork(
             Constants.WORK_EVENT_DISPATCH, ExistingWorkPolicy.KEEP, request
         )
+    }
+
+    fun scheduleRecovery(context: Context) {
+        EventRecoveryWorker.schedule(context)
     }
 
     fun schedulePeriodicDispatcher(context: Context) {

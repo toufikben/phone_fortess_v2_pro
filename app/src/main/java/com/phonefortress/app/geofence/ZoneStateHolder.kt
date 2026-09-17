@@ -1,40 +1,44 @@
 package com.phonefortress.app.geofence
 
+import com.phonefortress.app.data.prefs.SecurityPrefs
+import com.phonefortress.app.data.repository.SafeZoneRepository
 import com.phonefortress.app.domain.model.SafeZone
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * حافظ حالة المناطق الحالية — Shared singleton.
- * يسمح للخدمة والواجهة بمعرفة المنطقة الحالية بسرعة.
- */
 @Singleton
-class ZoneStateHolder @Inject constructor() {
-
+class ZoneStateHolder @Inject constructor(
+    private val securityPrefs: SecurityPrefs,
+    private val safeZoneRepository: SafeZoneRepository
+) {
     private val _currentZone = MutableStateFlow<SafeZone?>(null)
     val currentZone: StateFlow<SafeZone?> = _currentZone.asStateFlow()
 
     private val _isInSafeZone = MutableStateFlow<Boolean?>(null)
     val isInSafeZone: StateFlow<Boolean?> = _isInSafeZone.asStateFlow()
 
-    fun setCurrentZone(zone: SafeZone?) {
+    suspend fun restore() {
+        val persistedId = securityPrefs.currentZoneId.first()
+        _currentZone.value = persistedId?.let { safeZoneRepository.getById(it) }
+        _isInSafeZone.value = securityPrefs.inSafeZone.first()
+    }
+
+    suspend fun setCurrentZone(zone: SafeZone?) {
         _currentZone.value = zone
+        securityPrefs.setCurrentZoneId(zone?.id)
     }
 
     fun getCurrentZone(): SafeZone? = _currentZone.value
 
-    fun setInSafeZone(value: Boolean?) {
+    suspend fun setInSafeZone(value: Boolean?) {
         _isInSafeZone.value = value
+        securityPrefs.setInSafeZone(value)
     }
 
-    /**
-     * العتبة الفعلية بناءً على المنطقة الحالية.
-     * - داخل منطقة → عتبتها.
-     * - لا منطقة → عتبة افتراضية من الإعدادات.
-     */
     fun effectiveThreshold(defaultThreshold: Int): Int =
         _currentZone.value?.effectiveThreshold() ?: defaultThreshold
 }

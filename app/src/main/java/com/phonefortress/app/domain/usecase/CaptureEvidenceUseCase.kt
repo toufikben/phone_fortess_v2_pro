@@ -8,6 +8,7 @@ import com.phonefortress.app.domain.model.SecurityEventStatus
 import com.phonefortress.app.domain.model.ThreatLevel
 import com.phonefortress.app.geofence.ZoneStateHolder
 import com.phonefortress.app.platform.service.CameraForegroundService
+import com.phonefortress.app.platform.worker.WorkScheduler
 import com.phonefortress.app.util.Logger
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
@@ -39,7 +40,26 @@ class CaptureEvidenceUseCase @Inject constructor(
         )
         eventRepository.create(event)
         Logger.i("Security event created")
-        CameraForegroundService.start(context, eventId, isTest)
+        try {
+            CameraForegroundService.start(context, eventId, isTest)
+        } catch (error: Exception) {
+            val claimed = eventRepository.transition(
+                eventId,
+                SecurityEventStatus.IN_PROGRESS,
+                "capture-service-start-attempt",
+                com.phonefortress.app.domain.model.EventOperation.CAPTURE
+            )
+            if (claimed != null) {
+                eventRepository.transition(
+                    eventId,
+                    SecurityEventStatus.FAILED_RETRYABLE,
+                    "capture-service-start-failed",
+                    com.phonefortress.app.domain.model.EventOperation.CAPTURE
+                )
+                WorkScheduler.scheduleCaptureRetry(context, eventId)
+            }
+            Logger.e(error, "Capture service start failed")
+        }
         return eventId
     }
 

@@ -37,6 +37,8 @@ class SecurityPrefs @Inject constructor(
         val RETENTION_DAYS = intPreferencesKey("retention_days")
         val CONSECUTIVE_ATTEMPTS = intPreferencesKey("consecutive_attempts")
         val LAST_EVENT_AT = stringPreferencesKey("last_event_at")
+        val CURRENT_ZONE_ID = stringPreferencesKey("current_zone_id")
+        val IN_SAFE_ZONE = booleanPreferencesKey("in_safe_zone")
         val LANGUAGE = stringPreferencesKey("language")
     }
 
@@ -106,6 +108,21 @@ class SecurityPrefs @Inject constructor(
 
     suspend fun resetAttempts() {
         context.securityDataStore.edit { it[Keys.CONSECUTIVE_ATTEMPTS] = 0 }
+    }
+
+    val currentZoneId: Flow<String?> = context.securityDataStore.data.map { it[Keys.CURRENT_ZONE_ID] }
+    val inSafeZone: Flow<Boolean?> = context.securityDataStore.data.map { it[Keys.IN_SAFE_ZONE] }
+
+    suspend fun setCurrentZoneId(id: String?) {
+        context.securityDataStore.edit {
+            if (id == null) it.remove(Keys.CURRENT_ZONE_ID) else it[Keys.CURRENT_ZONE_ID] = id
+        }
+    }
+
+    suspend fun setInSafeZone(value: Boolean?) {
+        context.securityDataStore.edit {
+            if (value == null) it.remove(Keys.IN_SAFE_ZONE) else it[Keys.IN_SAFE_ZONE] = value
+        }
     }
 
     val language: Flow<String> =

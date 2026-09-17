@@ -10,6 +10,7 @@ import com.phonefortress.app.util.Logger
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -36,6 +37,7 @@ class AudioRecorder @Inject constructor(
      */
     suspend fun recordShort(outputDir: File, durationMs: Long = Constants.AUDIO_DURATION_MS): File? =
         withContext(Dispatchers.IO) {
+            var outputFile: File? = null
             try {
                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                     Logger.w("Microphone permission not granted")
@@ -47,6 +49,7 @@ class AudioRecorder @Inject constructor(
                     outputDir,
                     "evidence_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.m4a"
                 )
+                outputFile = file
 
                 val rec = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     MediaRecorder(context)
@@ -72,12 +75,21 @@ class AudioRecorder @Inject constructor(
                 stopAndRelease()
                 Logger.i("Audio saved: ${file.name}")
                 file
+            } catch (e: CancellationException) {
+                stopAndRelease()
+                outputFile?.delete()
+                throw e
             } catch (e: Exception) {
                 Logger.e(e, "Audio recording failed")
                 stopAndRelease()
+                outputFile?.delete()
                 null
             }
         }
+
+    fun release() {
+        stopAndRelease()
+    }
 
     private fun stopAndRelease() {
         try {

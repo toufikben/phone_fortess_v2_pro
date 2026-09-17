@@ -19,6 +19,9 @@ data class SecurityEvent(
     val status: SecurityEventStatus = SecurityEventStatus.PENDING,
     val operation: EventOperation = EventOperation.CAPTURE,
     val lastTransitionReason: String? = null,
+    val retryCount: Int = 0,
+    val lastTransitionAt: Long = timestamp,
+    val sendClaimedAt: Long? = null,
     val isTest: Boolean = false
 )
 

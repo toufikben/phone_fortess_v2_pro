@@ -42,6 +42,34 @@ class RoomMigrationTest {
         dbFile.delete()
     }
 
+    @Test
+    fun migration5To6AddsRecoveryMetadata() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val dbFile = File(context.cacheDir, "room-migration-5-6-test.db")
+        dbFile.delete()
+        val factory = FrameworkSQLiteOpenHelperFactory()
+        val v5 = factory.create(config(context, dbFile, 5, ::createV5Schema))
+        v5.writableDatabase.execSQL(
+            "INSERT INTO security_events(eventId,timestamp,failedAttempts,threshold,photoPath,audioPath,latitude,longitude,locationAccuracy,threatScore,threatLevel,threatReasons,status,operation,lastTransitionReason,isTest) VALUES ('legacy',100,3,3,NULL,NULL,NULL,NULL,NULL,20,'LOW','', 'IN_PROGRESS','CAPTURE',NULL,0)"
+        )
+        v5.close()
+
+        val v6 = factory.create(config(context, dbFile, 6) { db, oldVersion, newVersion ->
+            assertThat(oldVersion).isEqualTo(5)
+            assertThat(newVersion).isEqualTo(6)
+            RoomMigrations.MIGRATION_5_6.migrate(db)
+        })
+        val database = v6.writableDatabase
+        database.query("SELECT retryCount, lastTransitionAt, sendClaimedAt FROM security_events WHERE eventId = 'legacy'").use { cursor ->
+            assertThat(cursor.moveToFirst()).isTrue()
+            assertThat(cursor.getInt(cursor.getColumnIndexOrThrow("retryCount"))).isEqualTo(0)
+            assertThat(cursor.getLong(cursor.getColumnIndexOrThrow("lastTransitionAt"))).isEqualTo(100L)
+            assertThat(cursor.isNull(cursor.getColumnIndexOrThrow("sendClaimedAt"))).isTrue()
+        }
+        v6.close()
+        dbFile.delete()
+    }
+
     private fun config(
         context: Context,
         dbFile: File,
@@ -66,5 +94,9 @@ class RoomMigrationTest {
         db.execSQL("CREATE INDEX IF NOT EXISTS index_security_events_status ON security_events(status)")
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_security_events_eventId ON security_events(eventId)")
         db.execSQL("CREATE TABLE IF NOT EXISTS safe_zones (id TEXT NOT NULL, name TEXT NOT NULL, latitude REAL NOT NULL, longitude REAL NOT NULL, radiusMeters REAL NOT NULL, type TEXT NOT NULL, enabled INTEGER NOT NULL, createdAt INTEGER NOT NULL, PRIMARY KEY(id))")
+    }
+
+    private fun createV5Schema(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS security_events (eventId TEXT NOT NULL, timestamp INTEGER NOT NULL, failedAttempts INTEGER NOT NULL, threshold INTEGER NOT NULL, photoPath TEXT, audioPath TEXT, latitude REAL, longitude REAL, locationAccuracy REAL, threatScore INTEGER NOT NULL, threatLevel TEXT NOT NULL, threatReasons TEXT NOT NULL, status TEXT NOT NULL, operation TEXT NOT NULL, lastTransitionReason TEXT, isTest INTEGER NOT NULL, PRIMARY KEY(eventId))")
     }
 }

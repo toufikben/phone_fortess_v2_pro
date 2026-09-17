@@ -14,7 +14,10 @@ interface EventDao {
 
     @Query("""
         UPDATE security_events SET status = :targetStatus, operation = :operation,
-            lastTransitionReason = :reason
+            lastTransitionReason = :reason,
+            lastTransitionAt = :transitionAt,
+            retryCount = retryCount + CASE WHEN :targetStatus = 'FAILED_RETRYABLE' THEN 1 ELSE 0 END,
+            sendClaimedAt = CASE WHEN :targetStatus = 'SEND_PENDING' THEN sendClaimedAt ELSE NULL END
         WHERE eventId = :eventId AND status = :expectedStatus
     """)
     suspend fun transitionStatus(
@@ -22,8 +25,16 @@ interface EventDao {
         expectedStatus: String,
         targetStatus: String,
         operation: String,
-        reason: String
+        reason: String,
+        transitionAt: Long
     ): Int
+
+    @Query("""
+        UPDATE security_events SET sendClaimedAt = :claimedAt
+        WHERE eventId = :eventId AND status = 'SEND_PENDING'
+          AND (sendClaimedAt IS NULL OR sendClaimedAt < :expiredBefore)
+    """)
+    suspend fun claimSend(eventId: String, claimedAt: Long, expiredBefore: Long): Int
 
     @Query("""
         UPDATE security_events SET
@@ -61,7 +72,7 @@ interface EventDao {
     @Query("SELECT * FROM security_events WHERE status IN ('PENDING','DEFERRED','IN_PROGRESS','CAPTURED','SEND_PENDING','FAILED_RETRYABLE') ORDER BY timestamp ASC")
     suspend fun getActive(): List<SecurityEventEntity>
 
-    @Query("SELECT * FROM security_events WHERE status = 'IN_PROGRESS' AND timestamp < :before ORDER BY timestamp ASC")
+    @Query("SELECT * FROM security_events WHERE status = 'IN_PROGRESS' AND lastTransitionAt < :before ORDER BY lastTransitionAt ASC")
     suspend fun getStaleInProgress(before: Long): List<SecurityEventEntity>
 
     @Query("SELECT * FROM security_events WHERE timestamp < :before AND status IN ('SENT','FAILED_FINAL','CANCELLED')")

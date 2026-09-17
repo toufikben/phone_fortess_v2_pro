@@ -16,6 +16,7 @@ import com.phonefortress.app.util.Constants
 import com.phonefortress.app.util.Logger
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -52,6 +53,7 @@ class CameraController @Inject constructor(
         lifecycleOwner: LifecycleOwner,
         outputDir: File
     ): File? = withContext(Dispatchers.IO) {
+        var outputFile: File? = null
         try {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                 Logger.w("Camera permission not granted")
@@ -67,6 +69,7 @@ class CameraController @Inject constructor(
                 outputDir,
                 "intruder_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.jpg"
             )
+            outputFile = file
 
             val options = ImageCapture.OutputFileOptions.Builder(file).build()
 
@@ -82,13 +85,18 @@ class CameraController @Inject constructor(
 
                         override fun onError(exception: ImageCaptureException) {
                             Logger.e(exception, "Photo capture failed")
+                            file.delete()
                             if (cont.isActive) cont.resume(null)
                         }
                     }
                 )
             }
+        } catch (e: CancellationException) {
+            outputFile?.delete()
+            throw e
         } catch (e: Exception) {
             Logger.e(e, "Camera capture exception")
+            outputFile?.delete()
             null
         }
     }

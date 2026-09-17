@@ -15,28 +15,21 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * مستقبل Device Admin — يستقبل أحداث محاولات القفل الفاشلة/الناجحة.
- * يُطلق مسار التقاط الأدلة عند بلوغ العتبة.
- */
 @AndroidEntryPoint
 class MyDeviceAdminReceiver : DeviceAdminReceiver() {
-
     @Inject lateinit var captureUseCase: com.phonefortress.app.domain.usecase.CaptureEvidenceUseCase
     @Inject lateinit var securityPrefs: com.phonefortress.app.data.prefs.SecurityPrefs
     @Inject lateinit var zoneState: ZoneStateHolder
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
     override fun onPasswordFailed(context: Context, intent: Intent) {
         super.onPasswordFailed(context, intent)
-        scope.launch {
+        runAsync {
             try {
-                if (!securityPrefs.protectionEnabled.first() || !isAdminActive(context)) return@launch
+                if (!securityPrefs.protectionEnabled.first() || !isAdminActive(context)) return@runAsync
                 val configuredThreshold = securityPrefs.threshold.first()
                 val effectiveThreshold = zoneState.effectiveThreshold(configuredThreshold)
                 val evaluation = securityPrefs.incrementAttemptsAndCheckThreshold(effectiveThreshold)
-                Logger.d("Attempt ${evaluation.newAttemptCount} / threshold $effectiveThreshold")
+                Logger.d("Password attempt evaluated")
                 if (evaluation.thresholdReached) {
                     captureUseCase.start(evaluation.newAttemptCount, isTest = false)
                 }
@@ -49,9 +42,7 @@ class MyDeviceAdminReceiver : DeviceAdminReceiver() {
     override fun onPasswordSucceeded(context: Context, intent: Intent) {
         super.onPasswordSucceeded(context, intent)
         Logger.i("Password succeeded — resetting counter")
-        scope.launch {
-            runCatching { securityPrefs.resetAttempts() }
-        }
+        runAsync { runCatching { securityPrefs.resetAttempts() } }
     }
 
     override fun onEnabled(context: Context, intent: Intent) {
@@ -62,7 +53,18 @@ class MyDeviceAdminReceiver : DeviceAdminReceiver() {
     override fun onDisabled(context: Context, intent: Intent) {
         super.onDisabled(context, intent)
         Logger.i("Device Admin disabled")
-        scope.launch { runCatching { securityPrefs.setProtectionEnabled(false) } }
+        runAsync { runCatching { securityPrefs.setProtectionEnabled(false) } }
+    }
+
+    private fun runAsync(block: suspend () -> Unit) {
+        val pendingResult = goAsync()
+        CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
+            try {
+                block()
+            } finally {
+                pendingResult.finish()
+            }
+        }
     }
 
     private fun isAdminActive(context: Context): Boolean {

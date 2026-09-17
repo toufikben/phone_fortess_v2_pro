@@ -26,11 +26,14 @@ import com.phonefortress.app.util.Constants
 import com.phonefortress.app.util.Logger
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -47,6 +50,7 @@ class CameraForegroundService : Service(), LifecycleOwner {
     private val lifecycleRegistry = LifecycleRegistry(this)
     override val lifecycle: Lifecycle get() = lifecycleRegistry
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val captureMutex = Mutex()
     private val activeEvents = ConcurrentHashMap.newKeySet<String>()
     private var wakeLock: PowerManager.WakeLock? = null
 
@@ -70,7 +74,7 @@ class CameraForegroundService : Service(), LifecycleOwner {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val eventId = intent?.getStringExtra(EXTRA_EVENT_ID)
         if (eventId.isNullOrBlank()) return START_NOT_STICKY
-        if (!activeEvents.add(eventId)) return START_REDELIVER_INTENT
+        if (!activeEvents.add(eventId)) return START_NOT_STICKY
         acquireWakeLock()
         scope.launch {
             try {
@@ -78,24 +82,24 @@ class CameraForegroundService : Service(), LifecycleOwner {
                 val audio = securityPrefs.captureAudio.first()
                 val location = securityPrefs.captureLocation.first()
                 startForegroundWithNotification(photo, audio, location)
-                processEvent(eventId)
+                captureMutex.withLock { processEvent(eventId) }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Logger.e(e, "Event processing failed")
-                runCatching {
-                    eventRepository.transition(eventId, SecurityEventStatus.FAILED_RETRYABLE, "capture-exception", EventOperation.CAPTURE)
-                    WorkScheduler.scheduleCaptureRetry(applicationContext, eventId, 1)
-                }
+                runCatching { markCaptureRetryable(eventId, "capture-exception") }
             } finally {
                 cameraController.release()
+                audioRecorder.release()
                 activeEvents.remove(eventId)
-                releaseWakeLock()
                 if (activeEvents.isEmpty()) {
+                    releaseWakeLock()
                     stopForeground(STOP_FOREGROUND_REMOVE)
                     stopSelfResult(startId)
                 }
             }
         }
-        return START_REDELIVER_INTENT
+        return START_NOT_STICKY
     }
 
     private suspend fun processEvent(eventId: String) {
@@ -146,8 +150,21 @@ class CameraForegroundService : Service(), LifecycleOwner {
     }
 
     private suspend fun markCaptureRetryable(eventId: String, reason: String) {
-        eventRepository.transition(eventId, SecurityEventStatus.FAILED_RETRYABLE, reason, EventOperation.CAPTURE)
-        WorkScheduler.scheduleCaptureRetry(applicationContext, eventId, 1)
+        val current = eventRepository.getById(eventId) ?: return
+        val inProgress = when (current.status) {
+            SecurityEventStatus.PENDING,
+            SecurityEventStatus.DEFERRED -> eventRepository.transition(
+                eventId, SecurityEventStatus.IN_PROGRESS, "capture-failure-claim", EventOperation.CAPTURE
+            )
+            SecurityEventStatus.IN_PROGRESS -> current
+            else -> null
+        }
+        if (inProgress != null) {
+            val failed = eventRepository.transition(
+                eventId, SecurityEventStatus.FAILED_RETRYABLE, reason, EventOperation.CAPTURE
+            )
+            if (failed != null) WorkScheduler.scheduleCaptureRetry(applicationContext, eventId)
+        }
     }
 
     private fun startForegroundWithNotification(photo: Boolean, audio: Boolean, location: Boolean) {
@@ -173,5 +190,13 @@ class CameraForegroundService : Service(), LifecycleOwner {
     }
     private fun releaseWakeLock() { runCatching { wakeLock?.takeIf { it.isHeld }?.release() }; wakeLock = null }
     override fun onBind(intent: Intent?): IBinder? = null
-    override fun onDestroy() { scope.cancel(); cameraController.release(); releaseWakeLock(); super.onDestroy() }
+    override fun onDestroy() {
+        scope.cancel()
+        cameraController.release()
+        audioRecorder.release()
+        activeEvents.clear()
+        releaseWakeLock()
+        lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
+        super.onDestroy()
+    }
 }
