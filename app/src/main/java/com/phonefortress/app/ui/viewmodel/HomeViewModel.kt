@@ -1,5 +1,8 @@
 package com.phonefortress.app.ui.viewmodel
 
+import android.app.admin.DevicePolicyManager
+import android.content.ComponentName
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phonefortress.app.alerts.AlertDispatcher
@@ -8,6 +11,7 @@ import com.phonefortress.app.data.repository.EventRepository
 import com.phonefortress.app.domain.model.SecurityEvent
 import com.phonefortress.app.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +24,7 @@ import javax.inject.Inject
 
 data class HomeState(
     val isProtectionActive: Boolean = false,
+    val isDeviceAdminActive: Boolean = false,
     val uptimeText: String = "",
     val stats: HomeStats = HomeStats(),
     val lastEvent: SecurityEvent? = null,
@@ -36,6 +41,7 @@ data class HomeStats(
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val securityPrefs: SecurityPrefs,
     private val eventRepository: EventRepository,
     private val dispatcher: AlertDispatcher
@@ -56,12 +62,13 @@ class HomeViewModel @Inject constructor(
     private fun observeProtection() {
         viewModelScope.launch {
             securityPrefs.protectionEnabled.collect { active ->
+                val adminActive = isDeviceAdminActive()
                 if (active && protectionStartedAt == 0L) {
                     protectionStartedAt = System.currentTimeMillis()
                 } else if (!active) {
                     protectionStartedAt = 0
                 }
-                _state.update { it.copy(isProtectionActive = active) }
+                _state.update { it.copy(isProtectionActive = active && adminActive, isDeviceAdminActive = adminActive) }
             }
         }
     }
@@ -120,8 +127,29 @@ class HomeViewModel @Inject constructor(
     fun toggleProtection() {
         viewModelScope.launch {
             val current = securityPrefs.protectionEnabled.first()
+            if (!current && !isDeviceAdminActive()) return@launch
             securityPrefs.setProtectionEnabled(!current)
         }
+    }
+
+    fun refreshProtectionState() {
+        viewModelScope.launch {
+            val requested = securityPrefs.protectionEnabled.first()
+            val adminActive = isDeviceAdminActive()
+            _state.update { it.copy(isProtectionActive = requested && adminActive, isDeviceAdminActive = adminActive) }
+        }
+    }
+
+    fun enableProtectionIfReady() {
+        viewModelScope.launch {
+            if (isDeviceAdminActive()) securityPrefs.setProtectionEnabled(true)
+            refreshProtectionState()
+        }
+    }
+
+    private fun isDeviceAdminActive(): Boolean {
+        val manager = context.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+        return manager.isAdminActive(ComponentName(context, com.phonefortress.app.platform.admin.MyDeviceAdminReceiver::class.java))
     }
 
     private fun formatUptime(ms: Long): String {

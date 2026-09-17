@@ -23,20 +23,21 @@ class PhotoCleanupWorker @AssistedInject constructor(
     override suspend fun doWork(): Result = try {
         val retentionDays = securityPrefs.retentionDays.first()
         val cutoff = System.currentTimeMillis() - retentionDays * 24L * 60 * 60 * 1000
+        val terminalEvents = eventRepository.getTerminalBefore(cutoff)
+        var deletedFiles = 0
+        terminalEvents.forEach { event ->
+            listOfNotNull(event.photoPath, event.audioPath).forEach { path ->
+                val file = File(path)
+                if (!file.exists() || file.delete()) deletedFiles++
+            }
+        }
+        // Paths are cleared only after each event is terminal and its files are gone.
         eventRepository.clearEvidencePathsBefore(cutoff)
         eventRepository.deleteOlderThan(cutoff)
-        val evidenceDir = File(applicationContext.filesDir, Constants.DIR_EVIDENCE)
-        val photos = cleanupDir(File(evidenceDir, "photos"), cutoff)
-        val audio = cleanupDir(File(evidenceDir, "audio"), cutoff)
-        Logger.i("PhotoCleanupWorker: deleted $photos photos and $audio audio files")
+        Logger.i("PhotoCleanupWorker: removed $deletedFiles evidence files and ${terminalEvents.size} terminal events")
         Result.success()
     } catch (e: Exception) {
         Logger.e(e, "PhotoCleanupWorker failed")
         Result.retry()
-    }
-
-    private fun cleanupDir(dir: File, cutoff: Long): Int {
-        if (!dir.exists()) return 0
-        return dir.listFiles()?.count { it.isFile && it.lastModified() < cutoff && it.delete() } ?: 0
     }
 }

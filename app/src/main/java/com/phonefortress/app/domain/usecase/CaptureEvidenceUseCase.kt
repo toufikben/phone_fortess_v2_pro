@@ -6,6 +6,7 @@ import com.phonefortress.app.data.repository.EventRepository
 import com.phonefortress.app.domain.model.SecurityEvent
 import com.phonefortress.app.domain.model.SecurityEventStatus
 import com.phonefortress.app.domain.model.ThreatLevel
+import com.phonefortress.app.geofence.ZoneStateHolder
 import com.phonefortress.app.platform.service.CameraForegroundService
 import com.phonefortress.app.util.Logger
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -14,47 +15,34 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * حالة استخدام: بدء مسار التقاط الأدلة.
- * - ينشئ حدثاً أمنياً.
- * - يحفظه في Room.
- * - يطلق الخدمة الأمامية.
- */
 @Singleton
 class CaptureEvidenceUseCase @Inject constructor(
     @ApplicationContext private val context: Context,
     private val eventRepository: EventRepository,
-    private val securityPrefs: SecurityPrefs
+    private val securityPrefs: SecurityPrefs,
+    private val zoneState: ZoneStateHolder
 ) {
-
-    /**
-     * يُطلق حدثاً أمنياً جديداً.
-     */
     suspend fun start(attempts: Int, isTest: Boolean = false): String {
-        val threshold = securityPrefs.threshold.first()
+        val configuredThreshold = securityPrefs.threshold.first()
+        val effectiveThreshold = zoneState.effectiveThreshold(configuredThreshold)
         val eventId = UUID.randomUUID().toString()
-
         val event = SecurityEvent(
             id = eventId,
             timestamp = System.currentTimeMillis(),
             failedAttempts = attempts,
-            threshold = threshold,
+            threshold = effectiveThreshold,
             status = SecurityEventStatus.PENDING,
-            threatScore = computeInitialThreatScore(attempts, threshold),
+            threatScore = computeInitialThreatScore(attempts, effectiveThreshold),
             threatLevel = ThreatLevel.LOW,
+            lastTransitionReason = "event-created-effective-threshold=$effectiveThreshold;configured=$configuredThreshold",
             isTest = isTest
         )
-
         eventRepository.save(event)
-        Logger.i("Event created: $eventId (attempts=$attempts, test=$isTest)")
-
+        Logger.i("Event created: $eventId (attempts=$attempts, threshold=$effectiveThreshold, test=$isTest)")
         CameraForegroundService.start(context, eventId, isTest)
         return eventId
     }
 
-    /**
-     * درجة خطر أولية بناءً على عدد المحاولات.
-     */
     private fun computeInitialThreatScore(attempts: Int, threshold: Int): Int {
         val ratio = if (threshold > 0) attempts.toFloat() / threshold else 0f
         return when {

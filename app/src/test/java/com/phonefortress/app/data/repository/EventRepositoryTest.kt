@@ -2,6 +2,7 @@ package com.phonefortress.app.data.repository
 
 import com.google.common.truth.Truth.assertThat
 import com.phonefortress.app.data.local.dao.EventDao
+import com.phonefortress.app.data.local.entity.SecurityEventEntity
 import com.phonefortress.app.domain.model.SecurityEvent
 import com.phonefortress.app.domain.model.SecurityEventStatus
 import io.mockk.coEvery
@@ -27,7 +28,11 @@ class EventRepositoryTest {
         coEvery { dao.getById("evt-1") } returns null
         assertThat(repo.getById("evt-1")).isNull()
     }
-    @Test fun `update status delegates to dao`() = runTest { repo.updateStatus("evt-1", SecurityEventStatus.SENT); coVerify { dao.updateStatus("evt-1", "SENT") } }
+    @Test fun `transition persists only legal state changes`() = runTest {
+        coEvery { dao.getById("evt-1") } returns SecurityEventEntity.fromDomain(SecurityEvent("evt-1", 100L, 2, 3))
+        repo.transition("evt-1", SecurityEventStatus.IN_PROGRESS, "test")
+        coVerify { dao.upsert(match { it.eventId == "evt-1" && it.status == "IN_PROGRESS" && it.lastTransitionReason == "test" }) }
+    }
     @Test fun `active events are mapped`() = runTest { coEvery { dao.getActive() } returns emptyList(); assertThat(repo.getActive()).isEmpty() }
     @Test fun `observe recent maps empty flow`() = runTest { every { dao.observeRecent(50) } returns flowOf(emptyList()); assertThat(repo.observeRecent().first()).isEmpty() }
 }

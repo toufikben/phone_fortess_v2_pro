@@ -101,6 +101,17 @@ class SecurityPrefs @Inject constructor(
         return newValue
     }
 
+    /** Atomically increments the counter and evaluates the effective threshold. */
+    suspend fun incrementAttemptsAndCheckThreshold(threshold: Int): Int? {
+        var triggeringValue: Int? = null
+        context.securityDataStore.edit { prefs ->
+            val next = (prefs[Keys.CONSECUTIVE_ATTEMPTS] ?: 0) + 1
+            prefs[Keys.CONSECUTIVE_ATTEMPTS] = next
+            if (next >= threshold.coerceAtLeast(1)) triggeringValue = next
+        }
+        return triggeringValue
+    }
+
     suspend fun resetAttempts() {
         context.securityDataStore.edit { it[Keys.CONSECUTIVE_ATTEMPTS] = 0 }
     }

@@ -14,14 +14,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import com.phonefortress.app.R
-import com.phonefortress.app.alerts.AlertDispatcher
 import com.phonefortress.app.data.prefs.SecurityPrefs
 import com.phonefortress.app.data.repository.EventRepository
-import com.phonefortress.app.domain.model.SecurityEvent
+import com.phonefortress.app.domain.model.EventOperation
 import com.phonefortress.app.domain.model.SecurityEventStatus
-import com.phonefortress.app.domain.state.SecurityEventStateMachine
-import com.phonefortress.app.domain.usecase.EvaluateThreatUseCase
-import com.phonefortress.app.geofence.ZoneStateHolder
 import com.phonefortress.app.platform.audio.AudioRecorder
 import com.phonefortress.app.platform.camera.CameraController
 import com.phonefortress.app.platform.location.LocationProvider
@@ -37,250 +33,111 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
-/**
- * خدمة أمامية للتقاط الأدلة.
- * - تلتقط صورة.
- * - تسجل صوتاً (اختياري).
- * - تحدد الموقع.
- * - ترسل التنبيه.
- * - تُحدّث حالة الحدث في Room.
- */
 @AndroidEntryPoint
 class CameraForegroundService : Service(), LifecycleOwner {
-
     @Inject lateinit var cameraController: CameraController
     @Inject lateinit var audioRecorder: AudioRecorder
     @Inject lateinit var locationProvider: LocationProvider
     @Inject lateinit var eventRepository: EventRepository
-    @Inject lateinit var alertDispatcher: AlertDispatcher
     @Inject lateinit var securityPrefs: SecurityPrefs
-    @Inject lateinit var evaluateThreatUseCase: EvaluateThreatUseCase
-    @Inject lateinit var zoneState: ZoneStateHolder
 
     private val lifecycleRegistry = LifecycleRegistry(this)
     override val lifecycle: Lifecycle get() = lifecycleRegistry
-
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val activeEvents = ConcurrentHashMap.newKeySet<String>()
     private var wakeLock: PowerManager.WakeLock? = null
-    private var isProcessing = false
 
     companion object {
         const val EXTRA_EVENT_ID = "event_id"
         const val EXTRA_IS_TEST = "is_test"
-
         fun start(context: Context, eventId: String, isTest: Boolean = false) {
             val intent = Intent(context, CameraForegroundService::class.java).apply {
                 putExtra(EXTRA_EVENT_ID, eventId)
                 putExtra(EXTRA_IS_TEST, isTest)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
-            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(intent) else context.startService(intent)
         }
     }
 
     override fun onCreate() {
         super.onCreate()
-        lifecycleRegistry.currentState = Lifecycle.State.CREATED
         lifecycleRegistry.currentState = Lifecycle.State.STARTED
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val eventId = intent?.getStringExtra(EXTRA_EVENT_ID)
-        val isTest = intent?.getBooleanExtra(EXTRA_IS_TEST, false) ?: false
-
-        if (eventId.isNullOrBlank()) {
-            Logger.w("Service started without eventId")
-            stopSelf()
-            return START_NOT_STICKY
-        }
-
-        startForegroundWithNotification()
-
-        if (isProcessing) {
-            Logger.w("Already processing — ignoring $eventId")
-            return START_NOT_STICKY
-        }
-        isProcessing = true
-
+        if (eventId.isNullOrBlank()) return START_NOT_STICKY
+        if (!activeEvents.add(eventId)) return START_REDELIVER_INTENT
         acquireWakeLock()
-
         scope.launch {
             try {
-                processEvent(eventId, isTest)
+                val photo = securityPrefs.capturePhoto.first()
+                val audio = securityPrefs.captureAudio.first()
+                val location = securityPrefs.captureLocation.first()
+                startForegroundWithNotification(photo, audio, location)
+                processEvent(eventId)
             } catch (e: Exception) {
-                Logger.e(e, "Event processing failed")
+                Logger.e(e, "Event processing failed: $eventId")
+                runCatching {
+                    eventRepository.transition(eventId, SecurityEventStatus.FAILED_RETRYABLE, "capture-exception", EventOperation.CAPTURE)
+                    WorkScheduler.scheduleCaptureRetry(applicationContext, eventId, 1)
+                }
             } finally {
+                activeEvents.remove(eventId)
                 releaseWakeLock()
-                isProcessing = false
-                lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
-                stopForeground(STOP_FOREGROUND_REMOVE)
-                stopSelf()
+                if (activeEvents.isEmpty()) {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelfResult(startId)
+                }
             }
         }
-
-        return START_NOT_STICKY
+        return START_REDELIVER_INTENT
     }
 
-    private suspend fun processEvent(eventId: String, isTest: Boolean) {
-        val existing = eventRepository.getById(eventId) ?: run {
-            Logger.w("Event not found: $eventId")
-            return
-        }
-        if (SecurityEventStateMachine.isTerminal(existing.status)) {
-            Logger.i("Event already terminal: $eventId")
-            return
-        }
-
-        // 1. IN_PROGRESS
-        var event = SecurityEventStateMachine.transition(existing, SecurityEventStatus.IN_PROGRESS)
-        eventRepository.save(event)
-
-        // 2. مجلد الأدلة
+    private suspend fun processEvent(eventId: String) {
+        var event = eventRepository.getById(eventId) ?: return
+        if (event.status == SecurityEventStatus.SENT || event.status == SecurityEventStatus.FAILED_FINAL || event.status == SecurityEventStatus.CANCELLED) return
+        if (event.status == SecurityEventStatus.FAILED_RETRYABLE && event.operation != EventOperation.CAPTURE) return
+        event = eventRepository.transition(eventId, SecurityEventStatus.IN_PROGRESS, "capture-start", EventOperation.CAPTURE) ?: return
         val evidenceDir = File(filesDir, Constants.DIR_EVIDENCE).apply { mkdirs() }
         val photosDir = File(evidenceDir, "photos").apply { mkdirs() }
         val audioDir = File(evidenceDir, "audio").apply { mkdirs() }
-
-        // 3. صورة
-        val capturePhoto = securityPrefs.capturePhoto.first()
-        if (capturePhoto) {
-            val photo = withTimeoutOrNull(Constants.CAMERA_TIMEOUT_MS) {
-                cameraController.captureFrontPhoto(this@CameraForegroundService, photosDir)
-            }
-            if (photo != null) {
-                event = event.copy(photoPath = photo.absolutePath)
-            }
-        }
-
-        // 4. صوت
-        val captureAudio = securityPrefs.captureAudio.first()
-        if (captureAudio) {
-            val audio = withTimeoutOrNull(Constants.AUDIO_DURATION_MS + 5_000L) {
-                audioRecorder.recordShort(audioDir)
-            }
-            if (audio != null) {
-                event = event.copy(audioPath = audio.absolutePath)
-            }
-        }
-
-        // 5. موقع
-        val captureLocation = securityPrefs.captureLocation.first()
-        if (captureLocation) {
-            val loc = withTimeoutOrNull(Constants.LOCATION_TIMEOUT_MS + 2_000L) {
-                locationProvider.getCurrentLocation()
-            }
-            if (loc != null) {
-                event = event.copy(
-                    latitude = loc.latitude,
-                    longitude = loc.longitude,
-                    locationAccuracy = loc.accuracy
-                )
-            }
-        }
-
-        // 6. CAPTURED
-        event = SecurityEventStateMachine.transition(event, SecurityEventStatus.CAPTURED)
+        if (securityPrefs.capturePhoto.first()) withTimeoutOrNull(Constants.CAMERA_TIMEOUT_MS) { cameraController.captureFrontPhoto(this@CameraForegroundService, photosDir) }?.let { event = event.copy(photoPath = it.absolutePath) }
+        if (securityPrefs.captureAudio.first()) withTimeoutOrNull(Constants.AUDIO_DURATION_MS + 5_000L) { audioRecorder.recordShort(audioDir) }?.let { event = event.copy(audioPath = it.absolutePath) }
+        if (securityPrefs.captureLocation.first()) withTimeoutOrNull(Constants.LOCATION_TIMEOUT_MS + 2_000L) { locationProvider.getCurrentLocation() }?.let { event = event.copy(latitude = it.latitude, longitude = it.longitude, locationAccuracy = it.accuracy) }
         eventRepository.save(event)
-
-        // تقييم التهديد
-        val isInSafeZone = zoneState.isInSafeZone.value
-        val assessment = evaluateThreatUseCase(
-            photoPath = event.photoPath,
-            attempts = event.failedAttempts,
-            isInSafeZone = isInSafeZone,
-            isTest = event.isTest
-        )
-        event = event.copy(
-            threatScore = assessment.score,
-            threatLevel = assessment.level,
-            threatReasons = assessment.reasons
-        )
+        event = eventRepository.transition(eventId, SecurityEventStatus.CAPTURED, "capture-complete", EventOperation.CAPTURE) ?: return
         eventRepository.save(event)
-        Logger.i("Event $eventId threat=${assessment.score}/100 (${assessment.level})")
-
-        // 7. SEND_PENDING
-        event = SecurityEventStateMachine.transition(event, SecurityEventStatus.SEND_PENDING)
-        eventRepository.save(event)
-
-        // 8. إرسال
+        event = eventRepository.transition(eventId, SecurityEventStatus.SEND_PENDING, "dispatch-ready", EventOperation.SEND) ?: return
+        WorkScheduler.dispatchEventNow(applicationContext, eventId)
         cameraController.release()
-        val results = alertDispatcher.dispatch(event)
-
-        // 9. تحديد الحالة النهائية
-        val anySuccess = results.any { it is com.phonefortress.app.domain.model.AlertResult.Success }
-        val anyRetryable = results.any { it is com.phonefortress.app.domain.model.AlertResult.Retryable }
-
-        val finalStatus = when {
-            anySuccess -> SecurityEventStatus.SENT
-            anyRetryable -> SecurityEventStatus.FAILED_RETRYABLE
-            else -> SecurityEventStatus.FAILED_FINAL
-        }
-
-        event = SecurityEventStateMachine.transition(event, finalStatus)
-        eventRepository.save(event)
-        when (finalStatus) {
-            SecurityEventStatus.FAILED_RETRYABLE -> {
-                WorkScheduler.scheduleCaptureRetry(applicationContext, eventId, 0)
-                Logger.i("Scheduled retry for $eventId")
-            }
-            SecurityEventStatus.SENT -> Logger.i("Event $eventId delivered successfully")
-            else -> Logger.w("Event $eventId ended with $finalStatus")
-        }
-        Logger.i("Event $eventId finished: $finalStatus")
     }
 
-    private fun startForegroundWithNotification() {
+    private fun startForegroundWithNotification(photo: Boolean, audio: Boolean, location: Boolean) {
         val notification = buildNotification()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val type = ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA or
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+            var type = 0
+            if (photo) type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
+            if (audio) type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+            if (location) type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
             ServiceCompat.startForeground(this, Constants.NOTIF_ID_CAPTURE, notification, type)
-        } else {
-            startForeground(Constants.NOTIF_ID_CAPTURE, notification)
-        }
+        } else startForeground(Constants.NOTIF_ID_CAPTURE, notification)
     }
 
-    private fun buildNotification(): Notification =
-        NotificationCompat.Builder(this, Constants.CHANNEL_PROTECTION)
-            .setSmallIcon(R.drawable.ic_shield)
-            .setContentTitle(getString(R.string.capturing_evidence_title))
-            .setContentText(getString(R.string.capturing_evidence_body))
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setOngoing(true)
-            .setSilent(true)
-            .build()
+    private fun buildNotification(): Notification = NotificationCompat.Builder(this, Constants.CHANNEL_PROTECTION)
+        .setSmallIcon(R.drawable.ic_shield).setContentTitle(getString(R.string.capturing_evidence_title))
+        .setContentText(getString(R.string.capturing_evidence_body)).setPriority(NotificationCompat.PRIORITY_LOW)
+        .setOngoing(true).setSilent(true).build()
 
     private fun acquireWakeLock() {
         val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-        wakeLock = pm.newWakeLock(
-            PowerManager.PARTIAL_WAKE_LOCK,
-            "PhoneFortress::CaptureWakeLock"
-        ).apply {
-            setReferenceCounted(false)
-            acquire(60_000L)
-        }
+        if (wakeLock?.isHeld == true) return
+        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "PhoneFortress::CaptureWakeLock").apply { setReferenceCounted(false); acquire(60_000L) }
     }
-
-    private fun releaseWakeLock() {
-        try {
-            wakeLock?.takeIf { it.isHeld }?.release()
-        } catch (e: Exception) {
-            Logger.w("WakeLock release: ${e.message}")
-        }
-        wakeLock = null
-    }
-
+    private fun releaseWakeLock() { runCatching { wakeLock?.takeIf { it.isHeld }?.release() }; wakeLock = null }
     override fun onBind(intent: Intent?): IBinder? = null
-
-    override fun onDestroy() {
-        super.onDestroy()
-        scope.cancel()
-        cameraController.release()
-        releaseWakeLock()
-    }
+    override fun onDestroy() { scope.cancel(); cameraController.release(); releaseWakeLock(); super.onDestroy() }
 }

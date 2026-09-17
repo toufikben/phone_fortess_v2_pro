@@ -28,18 +28,16 @@ class MyDeviceAdminReceiver : DeviceAdminReceiver() {
 
     override fun onPasswordFailed(context: Context, intent: Intent) {
         super.onPasswordFailed(context, intent)
-        Logger.i("Password failed event received")
-
         scope.launch {
             try {
-                val attempts = securityPrefs.incrementAttempts()
-                val defaultThreshold = securityPrefs.threshold.first()
-                val effectiveThreshold = zoneState.effectiveThreshold(defaultThreshold)
-
-                Logger.d("Attempt $attempts / threshold $effectiveThreshold (default=$defaultThreshold)")
-
-                if (attempts >= effectiveThreshold) {
-                    captureUseCase.start(attempts, isTest = false)
+                if (!securityPrefs.protectionEnabled.first()) return@launch
+                val configuredThreshold = securityPrefs.threshold.first()
+                val effectiveThreshold = zoneState.effectiveThreshold(configuredThreshold)
+                val triggeringAttempts = securityPrefs.incrementAttemptsAndCheckThreshold(effectiveThreshold)
+                val currentAttempts = securityPrefs.consecutiveAttempts.first()
+                Logger.d("Attempt $currentAttempts / threshold $effectiveThreshold")
+                if (triggeringAttempts != null) {
+                    captureUseCase.start(triggeringAttempts, isTest = false)
                     securityPrefs.resetAttempts()
                 }
             } catch (e: Exception) {
@@ -64,5 +62,6 @@ class MyDeviceAdminReceiver : DeviceAdminReceiver() {
     override fun onDisabled(context: Context, intent: Intent) {
         super.onDisabled(context, intent)
         Logger.i("Device Admin disabled")
+        scope.launch { runCatching { securityPrefs.setProtectionEnabled(false) } }
     }
 }

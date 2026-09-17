@@ -45,3 +45,10 @@
     public static *** v(...);
     public static *** i(...);
 }
+
+# Optional classes referenced by MediaPipe, Angus Mail, and processor metadata.
+-dontwarn com.google.mediapipe.proto.**
+-dontwarn javax.lang.model.**
+-dontwarn javax.security.auth.callback.**
+-dontwarn javax.security.sasl.**
+-dontwarn org.graalvm.nativeimage.hosted.**

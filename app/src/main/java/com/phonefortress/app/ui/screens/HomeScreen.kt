@@ -1,5 +1,8 @@
 package com.phonefortress.app.ui.screens
 
+import android.app.admin.DevicePolicyManager
+import android.content.ComponentName
+import android.content.Intent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,6 +27,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +44,10 @@ import com.phonefortress.app.ui.components.common.ThemedCard
 import com.phonefortress.app.ui.theme.LocalThemeTokens
 import com.phonefortress.app.ui.theme.tokens.ThemeTokens
 import com.phonefortress.app.ui.viewmodel.HomeViewModel
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import com.phonefortress.app.platform.admin.MyDeviceAdminReceiver
 
 @Composable
 fun HomeScreen(
@@ -51,6 +59,11 @@ fun HomeScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val tokens = LocalThemeTokens.current
+    val context = LocalContext.current
+    val adminLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        viewModel.enableProtectionIfReady()
+    }
+    LaunchedEffect(Unit) { viewModel.refreshProtectionState() }
 
     ThemedBackground {
         Column(
@@ -73,7 +86,15 @@ fun HomeScreen(
             ProtectionHero(state.isProtectionActive, state.uptimeText)
             Spacer(Modifier.height(16.dp))
             FilledTonalButton(
-                onClick = viewModel::toggleProtection,
+                    onClick = {
+                        if (!state.isProtectionActive && !state.isDeviceAdminActive) {
+                            val component = ComponentName(context, MyDeviceAdminReceiver::class.java)
+                            adminLauncher.launch(Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
+                                putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, component)
+                                putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "يحتاج Phone Fortress إلى Device Admin لرصد محاولات فتح القفل الفاشلة.")
+                            })
+                        } else viewModel.toggleProtection()
+                    },
                 modifier = Modifier.fillMaxWidth(0.7f).height(52.dp),
                 colors = ButtonDefaults.filledTonalButtonColors(
                     containerColor = if (state.isProtectionActive) tokens.danger.copy(alpha = 0.15f) else tokens.primary,

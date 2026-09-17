@@ -26,7 +26,7 @@ object WorkScheduler {
             .addTag("capture_retry")
             .addTag("capture_retry_$eventId").build()
         WorkManager.getInstance(context).enqueueUniqueWork(
-            "${Constants.WORK_CAPTURE_RETRY}_$eventId", ExistingWorkPolicy.REPLACE, request
+            "${Constants.WORK_CAPTURE_RETRY}_$eventId", ExistingWorkPolicy.KEEP, request
         )
     }
 
@@ -48,7 +48,6 @@ object WorkScheduler {
         val data = Data.Builder().putString(EventDispatcherWorker.KEY_EVENT_ID, eventId).build()
         val request = OneTimeWorkRequestBuilder<EventDispatcherWorker>()
             .setInputData(data)
-            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 15, TimeUnit.SECONDS)
             .addTag("event_dispatch").addTag("dispatch_$eventId").build()
         WorkManager.getInstance(context).enqueueUniqueWork(
@@ -58,7 +57,6 @@ object WorkScheduler {
 
     fun scheduleEventDispatcher(context: Context) {
         val request = OneTimeWorkRequestBuilder<EventDispatcherWorker>()
-            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
             .addTag("event_dispatch").addTag(Constants.WORK_EVENT_DISPATCH).build()
         WorkManager.getInstance(context).enqueueUniqueWork(
@@ -68,7 +66,6 @@ object WorkScheduler {
 
     fun schedulePeriodicDispatcher(context: Context) {
         val request = PeriodicWorkRequestBuilder<EventDispatcherWorker>(6, TimeUnit.HOURS)
-            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .addTag("event_dispatch").addTag("periodic_dispatcher").build()
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             "periodic_dispatcher", ExistingPeriodicWorkPolicy.KEEP, request

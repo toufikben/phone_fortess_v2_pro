@@ -2,9 +2,6 @@ package com.phonefortress.app.domain.model
 
 import kotlinx.serialization.Serializable
 
-/**
- * نموذج الحدث الأمني — يمثل محاولة فتح قفل فاشلة موثقة.
- */
 @Serializable
 data class SecurityEvent(
     val id: String,
@@ -20,6 +17,8 @@ data class SecurityEvent(
     val threatLevel: ThreatLevel = ThreatLevel.LOW,
     val threatReasons: List<String> = emptyList(),
     val status: SecurityEventStatus = SecurityEventStatus.PENDING,
+    val operation: EventOperation = EventOperation.CAPTURE,
+    val lastTransitionReason: String? = null,
     val isTest: Boolean = false
 )
 
@@ -30,9 +29,11 @@ enum class SecurityEventStatus {
 }
 
 @Serializable
+enum class EventOperation { CAPTURE, SEND }
+
+@Serializable
 enum class ThreatLevel {
     LOW, MEDIUM, HIGH, CRITICAL;
-
     val emoji: String
         get() = when (this) {
             LOW -> "🟢"
@@ -42,9 +43,6 @@ enum class ThreatLevel {
         }
 }
 
-/**
- * حمولة التنبيه — البيانات الجاهزة للإرسال عبر أي قناة.
- */
 @Serializable
 data class AlertPayload(
     val title: String,
@@ -57,9 +55,6 @@ data class AlertPayload(
     val timestamp: Long
 )
 
-/**
- * نتيجة إرسال قناة واحدة.
- */
 sealed class AlertResult {
     data class Success(val messageId: String, val channelId: String) : AlertResult()
     data class Retryable(val reason: String, val channelId: String) : AlertResult()

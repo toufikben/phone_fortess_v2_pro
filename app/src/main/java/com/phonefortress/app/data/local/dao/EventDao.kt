@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface EventDao {
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(event: SecurityEventEntity)
 
@@ -19,16 +18,19 @@ interface EventDao {
     @Query("SELECT * FROM security_events ORDER BY timestamp DESC LIMIT :limit")
     fun observeRecent(limit: Int = 50): Flow<List<SecurityEventEntity>>
 
-    @Query("SELECT * FROM security_events WHERE status IN ('PENDING','DEFERRED','IN_PROGRESS','SEND_PENDING','FAILED_RETRYABLE') ORDER BY timestamp ASC")
+    @Query("SELECT * FROM security_events WHERE status IN ('CAPTURED','SEND_PENDING','FAILED_RETRYABLE') ORDER BY timestamp ASC")
+    suspend fun getDispatchable(): List<SecurityEventEntity>
+
+    @Query("SELECT * FROM security_events WHERE status IN ('PENDING','DEFERRED','IN_PROGRESS','CAPTURED','SEND_PENDING','FAILED_RETRYABLE') ORDER BY timestamp ASC")
     suspend fun getActive(): List<SecurityEventEntity>
 
-    @Query("UPDATE security_events SET status = :status WHERE eventId = :eventId")
-    suspend fun updateStatus(eventId: String, status: String)
+    @Query("SELECT * FROM security_events WHERE timestamp < :before AND status IN ('SENT','FAILED_FINAL','CANCELLED')")
+    suspend fun getTerminalBefore(before: Long): List<SecurityEventEntity>
 
-    @Query("DELETE FROM security_events WHERE timestamp < :before")
+    @Query("DELETE FROM security_events WHERE timestamp < :before AND status IN ('SENT','FAILED_FINAL','CANCELLED')")
     suspend fun deleteOlderThan(before: Long)
 
-    @Query("UPDATE security_events SET photoPath = NULL, audioPath = NULL WHERE timestamp < :before")
+    @Query("UPDATE security_events SET photoPath = NULL, audioPath = NULL WHERE timestamp < :before AND status IN ('SENT','FAILED_FINAL','CANCELLED')")
     suspend fun clearEvidencePathsBefore(before: Long)
 
     @Query("DELETE FROM security_events WHERE eventId = :eventId")

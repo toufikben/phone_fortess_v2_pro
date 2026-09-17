@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
+import android.os.SystemClock
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -64,7 +65,7 @@ class LocationProvider @Inject constructor(
             try {
                 client.lastLocation
                     .addOnSuccessListener { loc ->
-                        if (cont.isActive) cont.resume(loc?.toResult())
+                        if (cont.isActive) cont.resume(loc?.takeIf(::isRecent)?.toResult())
                     }
                     .addOnFailureListener { e ->
                         Logger.w("Last location failed: ${e.message}")
@@ -93,8 +94,13 @@ class LocationProvider @Inject constructor(
 
     private fun Location.toResult() = LocationResult(latitude, longitude, accuracy)
 
-    private fun isRecent(loc: Location): Boolean =
-        System.currentTimeMillis() - loc.time < 60_000L
+    private fun isRecent(loc: Location): Boolean {
+        val wallClockAge = System.currentTimeMillis() - loc.time
+        val elapsedAge = if (loc.elapsedRealtimeNanos > 0) {
+            SystemClock.elapsedRealtimeNanos() - loc.elapsedRealtimeNanos
+        } else Long.MAX_VALUE
+        return wallClockAge in 0..60_000L && elapsedAge in 0..60_000_000_000L && loc.accuracy.isFinite()
+    }
 
     private fun hasPermission(): Boolean {
         val fine = ContextCompat.checkSelfPermission(

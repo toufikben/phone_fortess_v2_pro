@@ -7,8 +7,9 @@ import androidx.work.WorkerParameters
 import com.phonefortress.app.alerts.AlertDispatcher
 import com.phonefortress.app.data.repository.EventRepository
 import com.phonefortress.app.domain.model.AlertResult
+import com.phonefortress.app.domain.model.EventOperation
+import com.phonefortress.app.domain.model.SecurityEvent
 import com.phonefortress.app.domain.model.SecurityEventStatus
-import com.phonefortress.app.domain.state.SecurityEventStateMachine
 import com.phonefortress.app.util.Logger
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -22,33 +23,51 @@ class EventDispatcherWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
     companion object { const val KEY_EVENT_ID = "specific_event_id" }
 
-    override suspend fun doWork(): Result = try {
-        inputData.getString(KEY_EVENT_ID)?.let { dispatchSingle(it) } ?: dispatchAllPending()
-        Result.success()
-    } catch (e: Exception) {
-        Logger.e(e, "EventDispatcherWorker failed")
-        if (runAttemptCount < 5) Result.retry() else Result.failure()
-    }
-
-    private suspend fun dispatchSingle(eventId: String): Boolean {
-        val event = eventRepository.getById(eventId) ?: return false
-        if (SecurityEventStateMachine.isTerminal(event.status)) return true
-        val results = alertDispatcher.dispatch(event)
-        val finalStatus = computeFinalStatus(results)
-        eventRepository.updateStatus(eventId, finalStatus)
-        return finalStatus == SecurityEventStatus.SENT
-    }
-
-    private suspend fun dispatchAllPending() {
-        eventRepository.getActive().forEach { event ->
-            runCatching { dispatchSingle(event.id) }
-                .onFailure { Logger.e(it, "Failed to dispatch ${event.id}") }
+    override suspend fun doWork(): Result {
+        return try {
+            val ids = inputData.getString(KEY_EVENT_ID)?.let { listOf(it) }
+            val events = ids?.mapNotNull { eventRepository.getById(it) } ?: eventRepository.getDispatchable()
+            var retryable = false
+            events.forEach { event ->
+                when (dispatchSingle(event)) {
+                    DispatchOutcome.RETRY -> retryable = true
+                    DispatchOutcome.FAILED -> Logger.w("Event ${event.id} reached final failure")
+                    DispatchOutcome.DONE, DispatchOutcome.SKIPPED -> Unit
+                }
+            }
+            if (retryable) Result.retry() else Result.success()
+        } catch (e: Exception) {
+            Logger.e(e, "EventDispatcherWorker infrastructure failure")
+            Result.retry()
         }
     }
 
-    private fun computeFinalStatus(results: List<AlertResult>): SecurityEventStatus = when {
-        results.any { it is AlertResult.Success } -> SecurityEventStatus.SENT
-        results.any { it is AlertResult.Retryable } -> SecurityEventStatus.FAILED_RETRYABLE
-        else -> SecurityEventStatus.FAILED_FINAL
+    private suspend fun dispatchSingle(initial: SecurityEvent): DispatchOutcome {
+        val event = when {
+            initial.status == SecurityEventStatus.CAPTURED ->
+                eventRepository.transition(initial.id, SecurityEventStatus.SEND_PENDING, "capture-complete", EventOperation.SEND)
+            initial.status == SecurityEventStatus.SEND_PENDING -> initial
+            initial.status == SecurityEventStatus.FAILED_RETRYABLE && initial.operation == EventOperation.SEND ->
+                eventRepository.transition(initial.id, SecurityEventStatus.SEND_PENDING, "send-retry", EventOperation.SEND)
+            else -> return DispatchOutcome.SKIPPED
+        } ?: return DispatchOutcome.SKIPPED
+
+        val results = alertDispatcher.dispatch(event)
+        return when {
+            results.any { it is AlertResult.Success } -> {
+                eventRepository.transition(event.id, SecurityEventStatus.SENT, "dispatch-success", EventOperation.SEND)
+                DispatchOutcome.DONE
+            }
+            results.any { it is AlertResult.Retryable } -> {
+                eventRepository.transition(event.id, SecurityEventStatus.FAILED_RETRYABLE, "dispatch-retryable-failure", EventOperation.SEND)
+                DispatchOutcome.RETRY
+            }
+            else -> {
+                eventRepository.transition(event.id, SecurityEventStatus.FAILED_FINAL, "dispatch-final-failure", EventOperation.SEND)
+                DispatchOutcome.FAILED
+            }
+        }
     }
+
+    private enum class DispatchOutcome { DONE, RETRY, FAILED, SKIPPED }
 }

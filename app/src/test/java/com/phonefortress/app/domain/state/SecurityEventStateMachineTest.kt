@@ -1,6 +1,7 @@
 package com.phonefortress.app.domain.state
 
 import com.google.common.truth.Truth.assertThat
+import com.phonefortress.app.domain.model.EventOperation
 import com.phonefortress.app.domain.model.SecurityEvent
 import com.phonefortress.app.domain.model.SecurityEventStatus
 import org.junit.jupiter.api.Test
@@ -27,5 +28,31 @@ class SecurityEventStateMachineTest {
         assertThat(SecurityEventStateMachine.isTerminal(SecurityEventStatus.FAILED_FINAL)).isTrue()
         assertThat(SecurityEventStateMachine.isTerminal(SecurityEventStatus.CANCELLED)).isTrue()
         assertThat(SecurityEventStateMachine.isTerminal(SecurityEventStatus.PENDING)).isFalse()
+    }
+
+    @Test fun `retry transitions preserve operation type`() {
+        val captureFailure = SecurityEventStateMachine.transitionRequired(
+            event(SecurityEventStatus.IN_PROGRESS), SecurityEventStatus.FAILED_RETRYABLE,
+            "camera-timeout", EventOperation.CAPTURE
+        )
+        val captureRetry = SecurityEventStateMachine.transitionRequired(
+            captureFailure, SecurityEventStatus.IN_PROGRESS, "capture-retry", EventOperation.CAPTURE
+        )
+        assertThat(captureRetry.operation).isEqualTo(EventOperation.CAPTURE)
+
+        val sendFailure = SecurityEventStateMachine.transitionRequired(
+            event(SecurityEventStatus.SEND_PENDING), SecurityEventStatus.FAILED_RETRYABLE,
+            "network", EventOperation.SEND
+        )
+        val sendRetry = SecurityEventStateMachine.transitionRequired(
+            sendFailure, SecurityEventStatus.SEND_PENDING, "send-retry", EventOperation.SEND
+        )
+        assertThat(sendRetry.operation).isEqualTo(EventOperation.SEND)
+    }
+
+    @Test fun `illegal transition leaves event unchanged`() {
+        val terminal = event(SecurityEventStatus.SENT)
+        assertThat(SecurityEventStateMachine.transition(terminal, SecurityEventStatus.PENDING, "invalid"))
+            .isEqualTo(terminal)
     }
 }
