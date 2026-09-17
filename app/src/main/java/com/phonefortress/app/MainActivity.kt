@@ -9,29 +9,32 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
-import com.phonefortress.app.ui.theme.PhoneFortressTheme
+import com.phonefortress.app.ui.screens.HomeScreen
+import com.phonefortress.app.ui.theme.AppThemeProvider
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
- * النشاط الرئيسي — يستضيف واجهة Compose.
- * يحتوي على شاشة Home الأولية فقط في هذه المرحلة.
+ * النشاط الرئيسي — يستضيف واجهة Compose والثيم المحفوظ محليًا.
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
-            PhoneFortressTheme {
+            AppThemeProvider {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Placeholder — سيُستبدل بـ NavHost لاحقًا
-                    com.phonefortress.app.ui.screens.HomePlaceholder()
+                    HomeScreen(
+                        onNavigateToLogs = {},
+                        onNavigateToZones = {},
+                        onNavigateToChannels = {},
+                        onNavigateToSettings = {}
+                    )
                 }
             }
         }
