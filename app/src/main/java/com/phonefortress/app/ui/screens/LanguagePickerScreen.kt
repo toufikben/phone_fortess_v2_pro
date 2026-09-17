@@ -22,7 +22,7 @@ fun LanguagePickerScreen(onBack: () -> Unit) {
     Scaffold(topBar = {
         TopAppBar(
             title = { Text("اختر اللغة / Language") },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } }
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع") } }
         )
     }) { padding ->
         LazyColumn(
@@ -38,7 +38,7 @@ fun LanguagePickerScreen(onBack: () -> Unit) {
                 ) {
                     Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(name, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium, color = tokens.textPrimary)
-                        if (code == currentLang) Icon(Icons.Default.CheckCircle, null, tint = tokens.primary)
+                        if (code == currentLang) Icon(Icons.Default.CheckCircle, contentDescription = "محدد", tint = tokens.primary)
                     }
                 }
             }

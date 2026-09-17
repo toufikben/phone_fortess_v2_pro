@@ -39,7 +39,7 @@ fun DiagnosticsScreen(
     Scaffold(topBar = {
         TopAppBar(
             title = { Text("تشخيص النظام") },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع") } },
             actions = { TextButton(onClick = viewModel::refresh) { Text("تحديث") } }
         )
     }) { padding ->

@@ -51,7 +51,7 @@ fun ThemePickerScreen(onBack: () -> Unit, viewModel: ThemeViewModel = hiltViewMo
     Scaffold(topBar = {
         TopAppBar(
             title = { Text("الهوية البصرية") },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } }
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع") } }
         )
     }) { padding ->
         LazyColumn(
@@ -87,7 +87,7 @@ private fun ThemePreviewCard(theme: AppTheme, isSelected: Boolean, onSelect: () 
                     Text(theme.displayNameAr, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = themeTokens.textPrimary)
                     Text(theme.displayNameEn, style = MaterialTheme.typography.labelSmall, color = themeTokens.textSecondary)
                 }
-                if (isSelected) Icon(Icons.Default.CheckCircle, null, tint = themeTokens.primary)
+                if (isSelected) Icon(Icons.Default.CheckCircle, contentDescription = "محدد", tint = themeTokens.primary)
             }
             Spacer(Modifier.height(12.dp))
             Text(theme.descriptionAr, style = MaterialTheme.typography.bodySmall, color = themeTokens.textSecondary)

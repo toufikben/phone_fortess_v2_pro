@@ -205,7 +205,7 @@ private fun EmptyState(modifier: Modifier = Modifier, onAdd: () -> Unit) {
         )
         Spacer(Modifier.height(24.dp))
         Button(onClick = onAdd) {
-            Icon(Icons.Default.Add, contentDescription = null)
+            Icon(Icons.Default.Add, contentDescription = "إضافة منطقة")
             Spacer(Modifier.width(8.dp))
             Text("إضافة منطقة")
         }

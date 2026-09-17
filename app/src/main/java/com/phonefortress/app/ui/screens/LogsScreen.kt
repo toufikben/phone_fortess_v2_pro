@@ -32,7 +32,7 @@ fun LogsScreen(onBack: () -> Unit, viewModel: LogsViewModel = hiltViewModel()) {
     val events by viewModel.events.collectAsStateWithLifecycle()
     val tokens = LocalThemeTokens.current
     Scaffold(topBar = {
-        TopAppBar(title = { Text("سجل الأحداث") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } })
+        TopAppBar(title = { Text("سجل الأحداث") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع") } })
     }) { padding ->
         if (events.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { Text("لا توجد أحداث بعد", color = tokens.textSecondary) }

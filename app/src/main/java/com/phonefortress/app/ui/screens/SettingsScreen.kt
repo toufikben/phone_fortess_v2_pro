@@ -45,7 +45,7 @@ fun SettingsScreen(onBack: () -> Unit, onThemePicker: () -> Unit, onPinSetup: ()
     val currentTheme by themeViewModel.selectedTheme.collectAsStateWithLifecycle()
     val tokens = LocalThemeTokens.current
     Scaffold(topBar = {
-        TopAppBar(title = { Text("الإعدادات") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } })
+        TopAppBar(title = { Text("الإعدادات") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع") } })
     }) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),

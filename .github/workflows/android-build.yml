@@ -52,11 +52,12 @@ jobs:
         run: python3 tools/verify_reliability_configuration.py
 
       - name: Build and test all release variants
-        run: ./gradlew clean testDebugUnitTest assembleDebug assembleRelease bundleRelease --no-daemon --stacktrace
+        run: ./gradlew clean testDebugUnitTest assembleDebug assembleDebugAndroidTest assembleRelease bundleRelease --no-daemon --stacktrace
 
       - name: Verify release artifacts
         run: |
           test -s app/build/outputs/apk/debug/app-debug.apk
+          test -s app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
           test -s app/build/outputs/apk/release/app-release-unsigned.apk
           test -s app/build/outputs/bundle/release/app-release.aab
 
@@ -81,6 +82,14 @@ jobs:
         with:
           name: phone-fortress-release-unsigned-aab-${{ github.sha }}
           path: app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload Android UI test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: phone-fortress-android-test-apk-${{ github.sha }}
+          path: app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
           if-no-files-found: error
           retention-days: 14
 

@@ -18,6 +18,7 @@ import androidx.core.view.WindowCompat
 import androidx.navigation.compose.rememberNavController
 import com.phonefortress.app.data.session.SessionManager
 import com.phonefortress.app.ui.navigation.AppNavHost
+import com.phonefortress.app.ui.navigation.Routes
 import com.phonefortress.app.ui.screens.pin.PinGateScreen
 import com.phonefortress.app.ui.theme.AppThemeProvider
 import dagger.hilt.android.AndroidEntryPoint
@@ -42,6 +43,7 @@ class MainActivity : AppCompatActivity() {
                     var unlocked by remember { mutableStateOf(false) }
                     val scope = rememberCoroutineScope()
                     val navController = rememberNavController()
+                    val notificationEventId = remember { intent?.getStringExtra("phone_fortress_event_id") }
                     LaunchedEffect(Unit) {
                         pinRequired = sessionManager.shouldRequireUnlock()
                         delay(400)
@@ -49,8 +51,8 @@ class MainActivity : AppCompatActivity() {
                     }
                     when (pinRequired) {
                         null -> Unit
-                        true -> if (!unlocked) PinGateScreen(onSuccess = { unlocked = true; scope.launch { sessionManager.markUnlocked() } }) else AppNavHost(navController)
-                        false -> AppNavHost(navController)
+                        true -> if (!unlocked) PinGateScreen(onSuccess = { unlocked = true; scope.launch { sessionManager.markUnlocked() } }) else AppNavHost(navController, if (notificationEventId != null) Routes.LOGS else Routes.HOME)
+                        false -> AppNavHost(navController, if (notificationEventId != null) Routes.LOGS else Routes.HOME)
                     }
                 }
             }

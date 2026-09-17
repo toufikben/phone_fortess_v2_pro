@@ -27,8 +27,8 @@ object Routes {
 }
 
 @Composable
-fun AppNavHost(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = Routes.HOME) {
+fun AppNavHost(navController: NavHostController, startDestination: String = Routes.HOME) {
+    NavHost(navController = navController, startDestination = startDestination) {
         composable(Routes.HOME) {
             HomeScreen(
                 onNavigateToLogs = { navController.navigate(Routes.LOGS) { launchSingleTop = true } },
