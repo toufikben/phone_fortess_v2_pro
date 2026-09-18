@@ -132,20 +132,21 @@ class Batch93SecurityConcurrencyTest {
 
     @Test
     fun corruptedSecurityDataStoreFailsClosedAndPinCorruptionCannotAuthenticate() = runBlocking {
-        val isolatedContext = context.createDeviceProtectedStorageContext()
-        val security = SecurityPrefs(isolatedContext)
+        val security = SecurityPrefs(context)
         security.setProtectionEnabled(false)
-        corruptDataStoreFile(isolatedContext, "security_prefs.preferences_pb")
+        assertThat(security.protectionEnabled.first()).isFalse()
+        corruptDataStoreFile(context, "security_prefs.preferences_pb")
 
-        val recoveredSecurity = SecurityPrefs(isolatedContext)
+        val recoveredSecurity = SecurityPrefs(context)
         assertThat(recoveredSecurity.protectionEnabled.first()).isTrue()
         assertThat(recoveredSecurity.threshold.first()).isEqualTo(com.phonefortress.app.util.Constants.MIN_THRESHOLD)
 
-        val pin = PinPrefs(isolatedContext, PinHasher())
+        val pin = PinPrefs(context, PinHasher())
         pin.setPin("2468")
-        corruptDataStoreFile(isolatedContext, "pin_prefs.preferences_pb")
+        assertThat(pin.isPinEnabled.first()).isTrue()
+        corruptDataStoreFile(context, "pin_prefs.preferences_pb")
 
-        val recoveredPin = PinPrefs(isolatedContext, PinHasher())
+        val recoveredPin = PinPrefs(context, PinHasher())
         assertThat(recoveredPin.isPinEnabled.first()).isTrue()
         assertThat(recoveredPin.verifyPin("2468")).isEqualTo(PinPrefs.VerifyResult.Corrupted)
         Unit
@@ -155,7 +156,7 @@ class Batch93SecurityConcurrencyTest {
         val file = sequenceOf(context.filesDir, context.dataDir)
             .flatMap { it.walkTopDown() }
             .firstOrNull { it.isFile && it.name == name }
-        assertThat(file).isNotNull()
+        assertThat(file).named("DataStore file $name; files=${context.filesDir.walkTopDown().map { it.path }.toList()}").isNotNull()
         requireNotNull(file).writeBytes(byteArrayOf(0x00, 0x01, 0x7f, 0x55))
     }
 
