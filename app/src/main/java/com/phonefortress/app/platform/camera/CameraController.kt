@@ -81,7 +81,11 @@ class CameraController @Inject constructor(
                     executor,
                     object : ImageCapture.OnImageSavedCallback {
                         override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                            val saved = finalizePhotoFile(temporaryFile, file) { cont.isActive }
+                            val saved = finalizePhotoFile(
+                                temporaryFile,
+                                file,
+                                continuationActive = { cont.isActive }
+                            )
                             if (saved != null) {
                                 Logger.i("Photo saved: ${file.name}")
                             }
