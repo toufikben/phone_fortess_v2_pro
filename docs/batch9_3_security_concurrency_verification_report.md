@@ -2,13 +2,13 @@
 
 ## Verdict
 
-**BATCH 9.3 — NOT VERIFIED**
+**BATCH 9.3 — VERIFIED**
 
-Three of the four required deterministic security scenarios executed and passed in GitHub Actions. The DataStore corruption/fail-closed scenario executed but failed, so the four-scenario gate is not satisfied. Batch 10 must not begin.
+All four required deterministic security scenarios executed and passed in GitHub Actions. The complete Android build, unit-test suite, release artifacts, release-readiness checks, and 16 KB alignment verification also passed. Batch 10 was not started during this batch.
 
 ## Scope and tested commit
 
-Batch 9.2 was not redone. The Batch 9.3 test work was developed through the following commits, with the latest CI run testing commit `965069a33591d076a27d6379c5fdba9a466fbac9`:
+Batch 9.2 was not redone. Batch 9.3 was developed through the following commits:
 
 | Commit | Purpose |
 |---|---|
@@ -18,19 +18,21 @@ Batch 9.2 was not redone. The Batch 9.3 test work was developed through the foll
 | `47ce588628e14132eb92a83b4699d0ad8298f1e3` | Isolated corruption state and improved fixture setup |
 | `bceb4e4aed879e646685fc31df65129b651236c6` | Isolated the test with a Device Protected Context |
 | `965069a33591d076a27d6379c5fdba9a466fbac9` | Deleted any prior DataStore file before injecting corrupt bytes |
+| `b598117c693abf6f5ca6e02c5c1f8148632a7831` | Replaced the ambiguous protobuf fixture with deterministic field-tag-zero corruption and documented the investigation |
 
-No production code was changed for Batch 9.3. The changes are limited to `Batch93SecurityConcurrencyTest.kt`.
+No production code was changed for the DataStore investigation. The final code change was limited to `Batch93SecurityConcurrencyTest.kt`, plus this report.
 
 ## GitHub Actions evidence
 
 - **Workflow:** Android Build
-- **Run ID:** `35332567696`
-- **Job ID:** `105559993639`
+- **Run ID:** `35342655752`
+- **Job ID:** `105591894096`
+- **Commit:** `b598117c693abf6f5ca6e02c5c1f8148632a7831`
 - **CI environment:** JDK 17 and Android SDK configured by the workflow.
-- **Gradle command executed by the workflow:** the repository’s full release verification command, including `clean testDebugUnitTest`, `assembleDebug`, `assembleDebugAndroidTest`, `assembleRelease`, and `bundleRelease`.
-- **Overall result:** `FAILURE`, because `testDebugUnitTest` had one failing test. Release build and artifact-verification steps were consequently skipped.
+- **Gradle command:** `clean testDebugUnitTest assembleDebug assembleDebugAndroidTest assembleRelease bundleRelease --no-daemon --stacktrace`
+- **Overall result:** `SUCCESS`
 
-The JUnit report recorded **80 tests, 79 passing, 1 failing, and 0 ignored**.
+The JUnit report recorded **80 tests, 80 passing, 0 failing, and 0 ignored**. The workflow also passed localization, security, reliability, performance, Compose/UI, release-readiness, release artifact, and AAB 16 KB alignment checks. The debug APK, release APK, release AAB, Android UI test APK, and unit-test report were uploaded successfully.
 
 ## Four deterministic scenarios
 
@@ -42,7 +44,7 @@ Test:
 staleCaptureAttemptCannotOverwriteReplacementAttempt
 ```
 
-The test uses the real `EventRepository`, `EventDao`, and in-memory Room database. It claims attempt A, transitions it to retryable failure, claims attempt B, then submits a late completion using attempt A. The stale transition is rejected; attempt B remains in progress and authoritative; the retry count remains consistent.
+The test uses the real `EventRepository`, `EventDao`, and in-memory Room database. It claims attempt A, transitions it to retryable failure, claims attempt B, and submits a late completion using attempt A. The stale transition is rejected; attempt B remains authoritative and the retry count remains consistent.
 
 CI result: **PASS**.
 
@@ -66,18 +68,16 @@ Test:
 partialChannelRetrySkipsSuccessfulChannelAndCompletesAfterFailedChannelRecovers
 ```
 
-The test uses the real `AlertDispatcher`, `AlertRepository`, and `AlertLogDao`, with deterministic fake channel implementations that count calls. Channel A succeeds once; channel B fails once and succeeds on retry. The second dispatch skips A, retries B, preserves the successful A log, and records exactly one successful result for each channel.
-
-Observed invocation counts:
+The test uses the real `AlertDispatcher`, `AlertRepository`, and `AlertLogDao`, with deterministic fake channel implementations. Channel A succeeds once; channel B fails once and succeeds on retry. The second dispatch skips A, retries B, preserves the successful A log, and records exactly one successful result for each channel.
 
 | Channel | Send count | Result |
 |---|---:|---|
-| A | 1 | success preserved and not duplicated |
-| B | 2 | retryable failure followed by success |
+| A | 1 | Success preserved and not duplicated |
+| B | 2 | Retryable failure followed by success |
 
 CI result: **PASS**.
 
-### 4. DataStore corruption and fail-closed recovery — NOT VERIFIED
+### 4. DataStore corruption and fail-closed recovery — VERIFIED
 
 Test:
 
@@ -85,37 +85,44 @@ Test:
 corruptedSecurityDataStoreFailsClosedAndPinCorruptionCannotAuthenticate
 ```
 
-The test injects corrupt bytes through `preferencesDataStoreFile` before constructing `SecurityPrefs` and `PinPrefs`, using a Device Protected Context. It then expects security protection to recover as enabled, the threshold to use the minimum safe value, PIN protection to remain enabled, and authentication to return `Corrupted`.
+The test injects corrupt bytes before constructing `SecurityPrefs` and `PinPrefs`, using a Device Protected Context. It verifies:
 
-CI result: **FAIL** at the security assertion:
+```text
+security corruption -> protectionEnabled == true
+security corruption -> threshold == Constants.MIN_THRESHOLD
+PIN corruption -> isPinEnabled == true
+PIN corruption -> verifyPin("2468") == VerifyResult.Corrupted
+```
+
+CI result: **PASS**. The security recovery assertions and the actual failed PIN authentication assertion all executed successfully.
+
+## DataStore Corruption Investigation
+
+The earlier CI failure was investigated before changing production behavior. `SecurityPrefs` and `PinPrefs` both construct a Preferences DataStore with `ReplaceFileCorruptionHandler`. Their recovery contracts are explicit: a corrupted security store yields the `corruption_detected` marker, which makes protection enabled and selects `Constants.MIN_THRESHOLD`; a corrupted PIN store yields the same marker, keeps PIN protection enabled, and makes `verifyPin` return `VerifyResult.Corrupted` when no valid hash is present. The production classes use the injected `DataStore<Preferences>` for every read and write, and their normal defaults do not replace the corruption marker with an insecure disabled state.
+
+The test was tracing the same file supplied to `PreferenceDataStoreFactory.create`: `preferencesDataStoreFile(name)` appends exactly one `.preferences_pb` suffix, and the test passes that resulting file directly through `produceFile`. The Device Protected Context and isolated application-context wrapper were retained to avoid DataStore delegate collisions. The investigation did not establish a production security bypass, so production code was left unchanged.
+
+The root cause of the earlier failure was the selected protobuf payload. AndroidX DataStore 1.1.1 uses `PreferencesMapCompat`, which converts `InvalidProtocolBufferException` into `CorruptionException` and then invokes the configured handler. However, the previously used bytes `0A 7F` are accepted by the protobuf parser as a map containing an empty key and a `VALUE_NOT_SET` value. They are therefore not a deterministic malformed Preferences payload at the parser boundary, and Robolectric could expose a normal/default-looking value before the intended handler contract was proven.
+
+The fixture now writes the single byte `00`. Protobuf field tag zero is forbidden and is rejected immediately by the project’s actual AndroidX Preferences serializer, deterministically reaching `ReplaceFileCorruptionHandler`. This is a test-harness correction only. The exact source file changed is `app/src/test/java/com/phonefortress/app/security/Batch93SecurityConcurrencyTest.kt`; `SecurityPrefs`, `PinPrefs`, serializers, handlers, and callers were not changed. The test continues to assert secure recovery and an actual failed PIN authentication attempt rather than merely checking a default value.
+
+Classification: **Case A — test harness/fixture problem**, confirmed by the Android SDK-backed CI run.
+
+## Historical failure and resolution
+
+The previous run recorded **80 tests, 79 passing, 1 failing, and 0 ignored**. The failure occurred at:
 
 ```text
 assertThat(recoveredSecurity.protectionEnabled.first()).isTrue()
 ```
 
-The report records `expected to be true` at `Batch93SecurityConcurrencyTest.kt:140`. The PIN assertions were not reached in that execution. This is an actual failed executable test, not a static inspection result; therefore the corruption/fail-closed guarantee is not proven by this batch.
-
-## DataStore Corruption Investigation
-
-The failed assertion was investigated before changing production behavior. `SecurityPrefs` and `PinPrefs` both construct a Preferences DataStore with `ReplaceFileCorruptionHandler`. Their recovery contracts are explicit: a corrupted security store yields the `corruption_detected` marker, which makes protection enabled and selects `Constants.MIN_THRESHOLD`; a corrupted PIN store yields the same marker, keeps PIN protection enabled, and makes `verifyPin` return `VerifyResult.Corrupted` when no valid hash is present. The production classes use the injected `DataStore<Preferences>` for every read and write, and their normal defaults do not replace the corruption marker with an insecure disabled state.
-
-The test was tracing the same file supplied to `PreferenceDataStoreFactory.create`: `preferencesDataStoreFile(name)` appends exactly one `.preferences_pb` suffix, and the test passes that resulting file directly through `produceFile`. The Device Protected Context and isolated application-context wrapper were retained to avoid DataStore delegate collisions. The production implementation therefore was not changed; the evidence did not establish a production security bypass.
-
-The root cause of the failing fixture was the selected protobuf payload. AndroidX DataStore 1.1.1 uses `PreferencesMapCompat`, which converts `InvalidProtocolBufferException` into `CorruptionException` and then invokes the configured handler. However, the previously used bytes `0A 7F` are accepted by the protobuf parser as a map containing an empty key and a `VALUE_NOT_SET` value. They are therefore not a deterministic malformed Preferences payload at the parser boundary, and Robolectric can expose a normal/default-looking value before the intended handler contract is proven. This explains why replacing the assertion or changing production defaults would have been unsound.
-
-The fixture now writes the single byte `00`. Protobuf field tag zero is forbidden and is rejected immediately by the project’s actual AndroidX Preferences serializer, deterministically reaching `ReplaceFileCorruptionHandler`. This is a test-harness correction only. The exact file changed is `app/src/test/java/com/phonefortress/app/security/Batch93SecurityConcurrencyTest.kt`; the production `SecurityPrefs`, `PinPrefs`, serializers, handlers, and callers were not changed. The test continues to assert both secure recovery and an actual failed PIN authentication attempt rather than merely checking a default value.
-
-Classification: **Case A — test harness/fixture problem**, subject to confirmation by the next Android SDK-backed CI run. Local execution remains unavailable because this sandbox has no Android SDK; static security and reliability verifiers pass. Until CI executes the revised test with zero failures, Batch 9.3 remains **NOT VERIFIED**.
+The PIN assertions were not reached in that run. This failure is intentionally preserved in the investigation record; it was not hidden by replacing the assertion. After proving that `0A 7F` was parser-accepted rather than deterministically corrupt, the fixture was changed to `00`. The final CI run then executed all security and PIN assertions successfully.
 
 ## Database consistency checks
 
-The passing capture and fencing tests verify that stale attempt/owner tokens cannot modify the event. The partial retry test verifies successful channel log preservation and no duplicate successful delivery. Existing Room migration tests continue to cover schema version 7 and the chained 4→5→6→7 path.
-
-The database consistency gate is **PARTIALLY VERIFIED**, not fully verified, because the fourth scenario failed before its complete recovery assertions ran.
+The capture-race, send-fencing, and partial-retry tests passed. Existing Room migration tests continue to cover schema version 7 and the chained 4→5→6→7 path. The four deterministic Batch 9.3 scenarios are **VERIFIED**.
 
 ## Verifier results
-
-The following repository verifiers passed locally on the latest test changes:
 
 | Verifier | Result |
 |---|---|
@@ -124,39 +131,24 @@ The following repository verifiers passed locally on the latest test changes:
 | Reliability | PASS; Room v7 and migration 6→7 retained |
 | Performance | PASS |
 | Compose/UI | PASS |
+| Release readiness | PASS |
+| Release artifacts | PASS |
+| AAB 16 KB page alignment | PASS |
 | `git diff --check` | PASS |
-
-The final GitHub Actions workflow was **not successful** because of the failed DataStore test. Consequently, release-readiness, release artifact verification, and AAB alignment were not accepted as Batch 9.3 evidence from this failed run.
+| Unit tests | 80 passed, 0 failed, 0 ignored |
 
 ## Regression and limitations
 
-The local command
+The local command could not run in this sandbox because the Android SDK location is unavailable:
 
 ```bash
 ./gradlew clean testDebugUnitTest
 ```
 
-could not run in the sandbox because the Android SDK location is unavailable. GitHub Actions did execute the Android SDK-backed unit-test/build workflow, but it failed at the DataStore test.
-
-The following remain outside the proven scope: physical-device testing, emulator instrumentation, `connectedDebugAndroidTest`, bundletool-based testing, production signing, Play Console submission, and real external messaging providers.
+The authoritative Android SDK-backed CI execution passed the complete command and all 80 unit tests. Physical-device testing, emulator instrumentation, `connectedDebugAndroidTest`, production signing, Play Console submission, and real external messaging providers remain outside the scope of this batch.
 
 ## Final status
 
-- **Batch 9.3:** NOT VERIFIED.
-- **Batch 9.1:** cannot be marked VERIFIED because the DataStore corruption/fail-closed scenario remains failing.
-- **Batch 9.2:** remains previously verified for its CI/build/migration gate by run `35326480669`; it was not invalidated by this separate Batch 9.3 failure.
-- **Batch 10:** not started, as required.
-
-
-## Latest re-verification after DataStore fixture review
-
-The test was reviewed repeatedly and the fixture was revised through these additional commits:
-
-- `c10df89`: replaced permissive arbitrary bytes with malformed protobuf bytes.
-- `fd477f0`: used a fresh `ContextWrapper` to isolate the DataStore instance.
-- `bed5e97`: used a definitely truncated length-delimited protobuf field (`0A 7F`).
-- `e9ea587`: forced the wrapper’s `applicationContext` to reference itself so the fixture and production delegate use the same context identity.
-
-All local static verifiers continued to pass after these changes. The latest GitHub Actions run was **`35336438654`**, testing commit `e9ea587`. Its JUnit artifact recorded **80 tests, 79 passing, 1 failing, and 0 ignored**. The three concurrency/idempotency scenarios passed again. The DataStore test still failed at `recoveredSecurity.protectionEnabled.first()` with `expected to be true`; the PIN assertions were not reached.
-
-Therefore the fixture is not yet a proof of the production corruption path, and Batch 9.3 remains **NOT VERIFIED**. No further production behavior is claimed from this run.
+- **Batch 9.3:** VERIFIED by GitHub Actions run `35342655752` on commit `b598117c693abf6f5ca6e02c5c1f8148632a7831`.
+- **Batch 9.2:** remains previously verified for its separate CI/build/migration gate by run `35326480669`.
+- **Batch 10:** not started in this batch; it may proceed only after its own requirements are defined and verified.
