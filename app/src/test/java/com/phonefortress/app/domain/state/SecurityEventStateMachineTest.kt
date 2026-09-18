@@ -87,4 +87,19 @@ class SecurityEventStateMachineTest {
             )
         }
     }
+
+    @Test fun `failure transitions reject mismatched operation`() {
+        assertThrows<IllegalStateException> {
+            SecurityEventStateMachine.transitionRequired(
+                event(SecurityEventStatus.IN_PROGRESS), SecurityEventStatus.FAILED_RETRYABLE,
+                "wrong-operation", EventOperation.SEND
+            )
+        }
+        assertThrows<IllegalStateException> {
+            SecurityEventStateMachine.transitionRequired(
+                event(SecurityEventStatus.SEND_PENDING), SecurityEventStatus.FAILED_RETRYABLE,
+                "wrong-operation", EventOperation.CAPTURE
+            )
+        }
+    }
 }

@@ -81,7 +81,9 @@ class SecurityPrefs @Inject constructor(
     }
 
     val retentionDays: Flow<Int> =
-        context.securityDataStore.data.map { it[Keys.RETENTION_DAYS] ?: Constants.DEFAULT_RETENTION_DAYS }
+        context.securityDataStore.data.map {
+            (it[Keys.RETENTION_DAYS] ?: Constants.DEFAULT_RETENTION_DAYS).coerceIn(1, 90)
+        }
 
     suspend fun setRetentionDays(days: Int) {
         context.securityDataStore.edit { it[Keys.RETENTION_DAYS] = days.coerceIn(1, 90) }

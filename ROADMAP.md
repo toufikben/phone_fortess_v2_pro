@@ -47,6 +47,13 @@
 - أُصلحت العيوب المثبتة في ملكية موارد الكاميرا والصوت، أسماء وكتابة ملفات الأدلة، قبول المواقع غير الصالحة، هوية الإشعارات، نتائج الإرسال المختلطة، تحقق SMTP، تزامن PIN، ساعة uptime، وتنظيف سجلات التنبيهات.
 - الحالة الحالية: **Batch 8 — CI/Unit Verification: VERIFIED** بعد نجاح 69 اختبارًا في GitHub Actions على commit `fce4086`. تبقى **Batch 8 — Real-device/runtime verification: PENDING**؛ لا يُدّعى اختبار جهاز حقيقي أو Emulator، ولا يُعتبر ذلك إغلاقًا لـBatch 7.1.
 
+### Batch 9 — Deep Security & Abuse Audit
+
+- أُجري تدقيق عدائي لمحاور Android components وIntents وPendingIntents وRoom/Workers وDataStore والملفات والشبكة والتشفير والأسرار وDoS وrelease packaging.
+- أُصلحت الثغرات المثبتة في operation routing، biometric gate، PIN boundary، evidence paths، SMTP hostname verification، debug HTTP logging، Logger throwable disclosure، stale-event query bounds، SMS fan-out، وتغليف الملفات الحساسة.
+- نجحت regression المحلية: **72 اختبارًا ناجحًا، 0 فاشلة**، مع نجاح verifiers الأساسية وبناء APK/AAB.
+- الحالة الحالية: **Batch 9 NOT VERIFIED — CI and runtime evidence pending**. لا يُدّعى اختبار جهاز حقيقي أو Emulator، وتبقى مخاطر lease/fencing وexactly-once delivery وDataStore corruption وproduction signing موثقة كمتبقية.
+
 ### المرحلة 8 — واجهة المنتج
 
 - ربط شاشة المناطق بالتنقل الرئيسي.

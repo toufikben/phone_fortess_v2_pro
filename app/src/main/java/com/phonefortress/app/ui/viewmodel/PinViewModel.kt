@@ -39,7 +39,8 @@ class PinViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val enabled = pinPrefs.isPinEnabled.first()
-            _gateState.update { it.copy(biometricAvailable = enabled && biometric.isAvailable()) }
+            val biometricEnabled = pinPrefs.isBiometricEnabled.first()
+            _gateState.update { it.copy(biometricAvailable = enabled && biometricEnabled && biometric.isAvailable()) }
             refreshLockout()
         }
     }
@@ -56,7 +57,9 @@ class PinViewModel @Inject constructor(
     fun requestBiometric() {
         val activity = context as? androidx.fragment.app.FragmentActivity ?: return
         viewModelScope.launch {
-            if (biometric.authenticate(activity)) _gateState.update { it.copy(isUnlocked = true) }
+            if (pinPrefs.isPinEnabled.first() && pinPrefs.isBiometricEnabled.first() && biometric.authenticate(activity)) {
+                _gateState.update { it.copy(isUnlocked = true) }
+            }
         }
     }
 

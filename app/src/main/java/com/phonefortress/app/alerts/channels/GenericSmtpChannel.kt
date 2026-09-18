@@ -8,11 +8,13 @@ import com.phonefortress.app.domain.model.AlertPayload
 import com.phonefortress.app.domain.model.AlertResult
 import com.phonefortress.app.domain.model.SecurityEvent
 import com.phonefortress.app.util.Logger
+import com.phonefortress.app.util.EvidencePathPolicy
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import org.eclipse.angus.mail.util.MailSSLSocketFactory
-import java.io.File
 import java.util.Properties
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -34,7 +36,8 @@ import jakarta.activation.FileDataSource
  */
 @Singleton
 class GenericSmtpChannel @Inject constructor(
-    private val prefs: AlertPrefs
+    private val prefs: AlertPrefs,
+    @ApplicationContext private val context: Context
 ) : AlertChannel {
 
     companion object {
@@ -86,6 +89,7 @@ class GenericSmtpChannel @Inject constructor(
             put("mail.smtp.starttls.enable", cfg.useTls.toString())
             put("mail.smtp.starttls.required", cfg.useTls.toString())
             put("mail.smtp.ssl.protocols", "TLSv1.2 TLSv1.3")
+            put("mail.smtp.ssl.checkserveridentity", "true")
             put("mail.smtp.connectiontimeout", "15000")
             put("mail.smtp.timeout", "15000")
             put("mail.smtp.writetimeout", "15000")
@@ -111,8 +115,8 @@ class GenericSmtpChannel @Inject constructor(
         val multipart = MimeMultipart().apply { addBodyPart(textPart) }
 
         payload.photoPath?.let { path ->
-            val file = File(path)
-            if (file.exists()) {
+            val file = EvidencePathPolicy.safeFile(path, context.filesDir, ".jpg")
+            if (file != null) {
                 val attach = MimeBodyPart().apply {
                     dataHandler = DataHandler(FileDataSource(file))
                     fileName = "intruder.jpg"
@@ -122,8 +126,8 @@ class GenericSmtpChannel @Inject constructor(
         }
 
         payload.audioPath?.let { path ->
-            val file = File(path)
-            if (file.exists()) {
+            val file = EvidencePathPolicy.safeFile(path, context.filesDir, ".m4a")
+            if (file != null) {
                 val attach = MimeBodyPart().apply {
                     dataHandler = DataHandler(FileDataSource(file))
                     fileName = "evidence.m4a"

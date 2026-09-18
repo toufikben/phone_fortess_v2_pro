@@ -31,7 +31,7 @@ object Logger {
     fun i(message: String, vararg args: Any?) = Timber.i(sanitize(message), *sanitizeArgs(args))
     fun w(message: String, vararg args: Any?) = Timber.w(sanitize(message), *sanitizeArgs(args))
     fun e(t: Throwable? = null, message: String, vararg args: Any?) {
-        if (t != null) Timber.e(t, sanitize(message), *sanitizeArgs(args))
+        if (t != null) Timber.e(sanitize("${sanitize(message)}: ${t.message.orEmpty()}"), *sanitizeArgs(args))
         else Timber.e(sanitize(message), *sanitizeArgs(args))
     }
 

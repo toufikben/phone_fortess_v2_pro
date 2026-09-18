@@ -9,6 +9,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
+import org.junit.Assert.assertThrows
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -26,4 +27,9 @@ class PinPrefsTest {
     @Test fun `wrong pin increments attempts`() = runTest { prefs.setPin("123456"); val r = prefs.verifyPin("000000"); assertThat(r).isInstanceOf(PinPrefs.VerifyResult.WrongPin::class.java); assertThat((r as PinPrefs.VerifyResult.WrongPin).remainingAttempts).isEqualTo(4) }
     @Test fun `lockout after five failures`() = runTest { prefs.setPin("123456"); repeat(5) { prefs.verifyPin("000000") }; assertThat(prefs.verifyPin("123456")).isInstanceOf(PinPrefs.VerifyResult.LockedOut::class.java) }
     @Test fun `disable pin clears state`() = runTest { prefs.setPin("123456"); prefs.disablePin(); assertThat(prefs.isPinEnabled.first()).isFalse() }
+    @Test fun `set pin rejects invalid values`() {
+        assertThrows(IllegalArgumentException::class.java) { runBlocking { prefs.setPin("") } }
+        assertThrows(IllegalArgumentException::class.java) { runBlocking { prefs.setPin("12ab") } }
+        assertThrows(IllegalArgumentException::class.java) { runBlocking { prefs.setPin("123456789") } }
+    }
 }

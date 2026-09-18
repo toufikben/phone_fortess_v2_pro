@@ -26,6 +26,8 @@ class SmsChannel @Inject constructor(
     private val prefs: AlertPrefs
 ) : AlertChannel {
 
+    private companion object { const val MAX_RECIPIENTS = 10 }
+
     override val id: String = "sms"
     override val displayName: String = "SMS"
     override val requiresConfig: Boolean = true
@@ -43,8 +45,12 @@ class SmsChannel @Inject constructor(
                 .split(",", ";")
                 .map { it.trim() }
                 .filter { it.isNotBlank() }
+                .distinct()
 
             if (numbers.isEmpty()) return@withContext AlertResult.Fatal("No SMS numbers", id)
+            if (numbers.size > MAX_RECIPIENTS) {
+                return@withContext AlertResult.Fatal("Too many SMS recipients", id)
+            }
 
             val shortBody = buildShortBody(payload)
 

@@ -29,6 +29,8 @@ echo "📄 Copying source..."
 mkdir -p "${OUT_DIR}/source"
 rsync -a --exclude='.gradle' --exclude='build' --exclude='.idea' \
   --exclude='local.properties' --exclude='*.jks' --exclude='*.keystore' \
+  --exclude='.env*' --exclude='*.log' --exclude='keystore.properties' \
+  --exclude='*.pem' --exclude='*.key' --exclude='*.p12' --exclude='*.pfx' \
   --exclude='app/build' --exclude='dist' \
   ./ "${OUT_DIR}/source/"
 

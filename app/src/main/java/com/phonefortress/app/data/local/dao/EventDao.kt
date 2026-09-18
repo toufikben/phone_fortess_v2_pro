@@ -72,8 +72,8 @@ interface EventDao {
     @Query("SELECT * FROM security_events WHERE status IN ('PENDING','DEFERRED','IN_PROGRESS','CAPTURED','SEND_PENDING','FAILED_RETRYABLE') ORDER BY timestamp ASC LIMIT :limit")
     suspend fun getActive(limit: Int): List<SecurityEventEntity>
 
-    @Query("SELECT * FROM security_events WHERE status = 'IN_PROGRESS' AND lastTransitionAt < :before ORDER BY lastTransitionAt ASC")
-    suspend fun getStaleInProgress(before: Long): List<SecurityEventEntity>
+    @Query("SELECT * FROM security_events WHERE status = 'IN_PROGRESS' AND lastTransitionAt < :before ORDER BY lastTransitionAt ASC LIMIT :limit")
+    suspend fun getStaleInProgress(before: Long, limit: Int): List<SecurityEventEntity>
 
     @Query("SELECT * FROM security_events WHERE timestamp < :before AND status IN ('SENT','FAILED_FINAL','CANCELLED') ORDER BY timestamp ASC LIMIT :limit")
     suspend fun getTerminalBefore(before: Long, limit: Int): List<SecurityEventEntity>

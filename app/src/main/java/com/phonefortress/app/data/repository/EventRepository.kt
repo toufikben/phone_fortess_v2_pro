@@ -38,7 +38,8 @@ class EventRepository @Inject constructor(private val dao: EventDao) {
         dao.getDispatchable(limit.coerceIn(1, Constants.MAX_EVENT_BATCH_SIZE)).map { it.toDomain() }
     suspend fun getActive(limit: Int = Constants.MAX_EVENT_BATCH_SIZE): List<SecurityEvent> =
         dao.getActive(limit.coerceIn(1, Constants.MAX_EVENT_BATCH_SIZE)).map { it.toDomain() }
-    suspend fun getStaleInProgress(before: Long): List<SecurityEvent> = dao.getStaleInProgress(before).map { it.toDomain() }
+    suspend fun getStaleInProgress(before: Long, limit: Int = Constants.MAX_EVENT_BATCH_SIZE): List<SecurityEvent> =
+        dao.getStaleInProgress(before, limit.coerceIn(1, Constants.MAX_EVENT_BATCH_SIZE)).map { it.toDomain() }
     suspend fun getTerminalBefore(timestamp: Long, limit: Int = Constants.MAX_EVENT_BATCH_SIZE): List<SecurityEvent> =
         dao.getTerminalBefore(timestamp, limit.coerceIn(1, Constants.MAX_EVENT_BATCH_SIZE)).map { it.toDomain() }
     suspend fun claimForSend(eventId: String, now: Long = System.currentTimeMillis()): Boolean =

@@ -7,6 +7,9 @@ import com.phonefortress.app.domain.model.AlertPayload
 import com.phonefortress.app.domain.model.AlertResult
 import com.phonefortress.app.domain.model.SecurityEvent
 import com.phonefortress.app.util.Logger
+import com.phonefortress.app.util.EvidencePathPolicy
+import dagger.hilt.android.qualifiers.ApplicationContext
+import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -20,7 +23,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,7 +33,8 @@ import javax.inject.Singleton
 class TelegramChannel @Inject constructor(
     private val prefs: AlertPrefs,
     private val client: OkHttpClient,
-    private val json: Json
+    private val json: Json,
+    @ApplicationContext private val context: Context
 ) : AlertChannel {
 
     override val id: String = "telegram"
@@ -55,7 +58,7 @@ class TelegramChannel @Inject constructor(
             if (chatId.isBlank()) return@withContext AlertResult.Fatal("Chat ID missing", id)
 
             try {
-                if (payload.photoPath != null && File(payload.photoPath).exists()) {
+                if (EvidencePathPolicy.safeFile(payload.photoPath, context.filesDir, ".jpg") != null) {
                     sendPhoto(token, chatId, payload)
                 } else {
                     sendMessage(token, chatId, payload.body)
@@ -85,7 +88,8 @@ class TelegramChannel @Inject constructor(
 
     private fun sendPhoto(token: String, chatId: String, payload: AlertPayload): AlertResult {
         val url = "https://api.telegram.org/bot$token/sendPhoto"
-        val file = File(payload.photoPath!!)
+        val file = EvidencePathPolicy.safeFile(payload.photoPath, context.filesDir, ".jpg")
+            ?: return AlertResult.Fatal("Invalid photo path", id)
         val photoBody = file.asRequestBody("image/jpeg".toMediaType())
         val body = MultipartBody.Builder()
             .setType(MultipartBody.FORM)

@@ -60,8 +60,10 @@ object SecurityEventStateMachine {
         from == SecurityEventStatus.IN_PROGRESS && to == SecurityEventStatus.CAPTURED -> operation == EventOperation.CAPTURE
         from == SecurityEventStatus.CAPTURED && to == SecurityEventStatus.SEND_PENDING -> operation == EventOperation.SEND
         from == SecurityEventStatus.SEND_PENDING && to == SecurityEventStatus.SENT -> operation == EventOperation.SEND
+        from == SecurityEventStatus.IN_PROGRESS && to == SecurityEventStatus.FAILED_RETRYABLE -> operation == EventOperation.CAPTURE
+        from == SecurityEventStatus.SEND_PENDING && to == SecurityEventStatus.FAILED_RETRYABLE -> operation == EventOperation.SEND
         from == SecurityEventStatus.FAILED_RETRYABLE && to == SecurityEventStatus.SEND_PENDING -> operation == EventOperation.SEND
-        from == SecurityEventStatus.FAILED_RETRYABLE && to == SecurityEventStatus.FAILED_FINAL -> true
+        from == SecurityEventStatus.FAILED_RETRYABLE && to == SecurityEventStatus.FAILED_FINAL -> operation in setOf(EventOperation.CAPTURE, EventOperation.SEND)
         else -> true
     }
 

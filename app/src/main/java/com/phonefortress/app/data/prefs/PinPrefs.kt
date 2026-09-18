@@ -42,6 +42,7 @@ class PinPrefs @Inject constructor(
     val lastUnlock: Flow<Long> = context.pinDataStore.data.map { it[Keys.LAST_UNLOCK] ?: 0L }
 
     suspend fun setPin(pin: String) {
+        require(pin.matches(Regex("^[0-9]{4,8}$"))) { "PIN must contain 4 to 8 digits" }
         val hashed = hasher.hash(pin)
         context.pinDataStore.edit {
             it[Keys.PIN_HASH] = hashed.hash
@@ -86,7 +87,7 @@ class PinPrefs @Inject constructor(
     }
 
     suspend fun setBiometricEnabled(enabled: Boolean) { context.pinDataStore.edit { it[Keys.BIOMETRIC_ENABLED] = enabled } }
-    suspend fun disablePin() { context.pinDataStore.edit { it[Keys.PIN_ENABLED] = false; it.remove(Keys.PIN_HASH); it.remove(Keys.PIN_SALT); it[Keys.FAILED_ATTEMPTS] = 0; it[Keys.LOCKOUT_UNTIL] = 0L } }
+    suspend fun disablePin() { context.pinDataStore.edit { it[Keys.PIN_ENABLED] = false; it[Keys.BIOMETRIC_ENABLED] = false; it.remove(Keys.PIN_HASH); it.remove(Keys.PIN_SALT); it[Keys.FAILED_ATTEMPTS] = 0; it[Keys.LOCKOUT_UNTIL] = 0L } }
     suspend fun markUnlocked() { context.pinDataStore.edit { it[Keys.LAST_UNLOCK] = System.currentTimeMillis() } }
 
     sealed class VerifyResult {
