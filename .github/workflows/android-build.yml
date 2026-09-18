@@ -8,6 +8,11 @@ on:
   workflow_dispatch:
     inputs:
       run_instrumentation:
+        description: Run Android instrumentation tests on a disposable emulator
+        required: false
+        default: false
+        type: boolean
+      run_managed_instrumentation:
         description: Run Android instrumentation tests on the Gradle Managed Device
         required: false
         default: false
@@ -83,6 +88,11 @@ jobs:
         env:
           BUNDLETOOL_JAR: ${{ runner.temp }}/bundletool-all-1.18.3.jar
         run: python3 tools/verify_release_readiness.py
+
+      - name: Verify AAB 16 KB page alignment
+        env:
+          BUNDLETOOL_JAR: ${{ runner.temp }}/bundletool-all-1.18.3.jar
+        run: python3 tools/verify_aab_16kb.py
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -162,3 +172,55 @@ jobs:
           emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot
           disable-animations: true
           script: sleep 20 && adb devices && ./gradlew connectedDebugAndroidTest --no-daemon --stacktrace
+
+      - name: Upload emulator instrumentation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phone-fortress-emulator-instrumentation-results-${{ github.sha }}
+          path: |
+            app/build/reports/androidTests/connected/
+            app/build/outputs/androidTest-results/connected/
+          if-no-files-found: warn
+          retention-days: 14
+
+  managed-instrumentation:
+    name: Gradle Managed Device instrumentation tests (manual)
+    if: github.event_name == 'workflow_dispatch' && inputs.run_managed_instrumentation == true
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK for the managed device
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools emulator platforms;android-35 system-images;android-35;default;x86_64'
+          accept-android-sdk-licenses: true
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Run instrumentation tests on the Gradle Managed Device
+        run: ./gradlew pixel2api35DebugAndroidTest --no-daemon --stacktrace
+
+      - name: Upload managed-device test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phone-fortress-managed-device-results-${{ github.sha }}
+          path: |
+            app/build/reports/androidTests/managed_device*/
+            app/build/outputs/androidTest-results/managed_device*/
+          if-no-files-found: warn
+          retention-days: 14
