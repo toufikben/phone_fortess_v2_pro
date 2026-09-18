@@ -126,7 +126,7 @@ jobs:
           retention-days: 14
 
   instrumentation:
-    name: Managed device instrumentation tests
+    name: Emulator instrumentation tests (manual)
     if: github.event_name == 'workflow_dispatch' && inputs.run_instrumentation == true
     runs-on: ubuntu-24.04
     steps:
@@ -143,7 +143,7 @@ jobs:
       - name: Set up Android SDK and API 35 system image
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platform-tools platforms;android-35 system-images;android-35;default;x86_64'
+          packages: 'platform-tools emulator platforms;android-35 system-images;android-35;google_apis;x86_64'
           accept-android-sdk-licenses: true
 
       - name: Set up Gradle
@@ -152,5 +152,13 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
-      - name: Run Managed Device instrumentation tests
-        run: ./gradlew pixel2api35DebugAndroidTest --no-daemon --stacktrace
+      - name: Run instrumentation tests on a disposable emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot
+          disable-animations: true
+          script: ./gradlew connectedDebugAndroidTest --no-daemon --stacktrace
