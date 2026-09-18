@@ -158,9 +158,9 @@ class Batch93SecurityConcurrencyTest {
     private fun corruptDataStoreFile(file: java.io.File) {
         file.parentFile?.mkdirs()
         file.delete()
-        // Declare a 127-byte length-delimited field without supplying its payload.
-        // This is malformed protobuf and cannot be interpreted as an empty preference set.
-        file.writeBytes(byteArrayOf(0x0A, 0x7F))
+        // Field tag zero is forbidden by protobuf and is rejected immediately by
+        // PreferencesMapCompat, which deterministically reaches the corruption handler.
+        file.writeBytes(byteArrayOf(0x00))
     }
 
     private fun newPreferenceDataStore(file: java.io.File): DataStore<Preferences> =

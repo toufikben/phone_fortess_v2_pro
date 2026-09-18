@@ -95,6 +95,18 @@ assertThat(recoveredSecurity.protectionEnabled.first()).isTrue()
 
 The report records `expected to be true` at `Batch93SecurityConcurrencyTest.kt:140`. The PIN assertions were not reached in that execution. This is an actual failed executable test, not a static inspection result; therefore the corruption/fail-closed guarantee is not proven by this batch.
 
+## DataStore Corruption Investigation
+
+The failed assertion was investigated before changing production behavior. `SecurityPrefs` and `PinPrefs` both construct a Preferences DataStore with `ReplaceFileCorruptionHandler`. Their recovery contracts are explicit: a corrupted security store yields the `corruption_detected` marker, which makes protection enabled and selects `Constants.MIN_THRESHOLD`; a corrupted PIN store yields the same marker, keeps PIN protection enabled, and makes `verifyPin` return `VerifyResult.Corrupted` when no valid hash is present. The production classes use the injected `DataStore<Preferences>` for every read and write, and their normal defaults do not replace the corruption marker with an insecure disabled state.
+
+The test was tracing the same file supplied to `PreferenceDataStoreFactory.create`: `preferencesDataStoreFile(name)` appends exactly one `.preferences_pb` suffix, and the test passes that resulting file directly through `produceFile`. The Device Protected Context and isolated application-context wrapper were retained to avoid DataStore delegate collisions. The production implementation therefore was not changed; the evidence did not establish a production security bypass.
+
+The root cause of the failing fixture was the selected protobuf payload. AndroidX DataStore 1.1.1 uses `PreferencesMapCompat`, which converts `InvalidProtocolBufferException` into `CorruptionException` and then invokes the configured handler. However, the previously used bytes `0A 7F` are accepted by the protobuf parser as a map containing an empty key and a `VALUE_NOT_SET` value. They are therefore not a deterministic malformed Preferences payload at the parser boundary, and Robolectric can expose a normal/default-looking value before the intended handler contract is proven. This explains why replacing the assertion or changing production defaults would have been unsound.
+
+The fixture now writes the single byte `00`. Protobuf field tag zero is forbidden and is rejected immediately by the project’s actual AndroidX Preferences serializer, deterministically reaching `ReplaceFileCorruptionHandler`. This is a test-harness correction only. The exact file changed is `app/src/test/java/com/phonefortress/app/security/Batch93SecurityConcurrencyTest.kt`; the production `SecurityPrefs`, `PinPrefs`, serializers, handlers, and callers were not changed. The test continues to assert both secure recovery and an actual failed PIN authentication attempt rather than merely checking a default value.
+
+Classification: **Case A — test harness/fixture problem**, subject to confirmation by the next Android SDK-backed CI run. Local execution remains unavailable because this sandbox has no Android SDK; static security and reliability verifiers pass. Until CI executes the revised test with zero failures, Batch 9.3 remains **NOT VERIFIED**.
+
 ## Database consistency checks
 
 The passing capture and fencing tests verify that stale attempt/owner tokens cannot modify the event. The partial retry test verifies successful channel log preservation and no duplicate successful delivery. Existing Room migration tests continue to cover schema version 7 and the chained 4→5→6→7 path.
