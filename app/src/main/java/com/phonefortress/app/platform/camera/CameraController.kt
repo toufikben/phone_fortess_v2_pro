@@ -81,9 +81,11 @@ class CameraController @Inject constructor(
                     executor,
                     object : ImageCapture.OnImageSavedCallback {
                         override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                            val moved = temporaryFile.renameTo(file)
-                            Logger.i("Photo saved: ${file.name}")
-                            if (cont.isActive) cont.resume(file.takeIf { moved }) else temporaryFile.delete()
+                            val saved = finalizePhotoFile(temporaryFile, file) { cont.isActive }
+                            if (saved != null) {
+                                Logger.i("Photo saved: ${file.name}")
+                            }
+                            if (cont.isActive) cont.resume(saved)
                         }
 
                         override fun onError(exception: ImageCaptureException) {
@@ -162,5 +164,24 @@ class CameraController @Inject constructor(
         } catch (e: Exception) {
             Logger.e(e, "Camera release failed")
         }
+    }
+
+    internal fun finalizePhotoFile(
+        temporaryFile: File,
+        finalFile: File,
+        continuationActive: () -> Boolean,
+        afterRename: () -> Unit = {}
+    ): File? {
+        if (!continuationActive()) {
+            temporaryFile.delete()
+            return null
+        }
+        val moved = temporaryFile.renameTo(finalFile)
+        afterRename()
+        if (!continuationActive()) {
+            if (moved) finalFile.delete() else temporaryFile.delete()
+            return null
+        }
+        return finalFile.takeIf { moved }
     }
 }

@@ -34,6 +34,15 @@ class AlertDispatcher @Inject constructor(
         }
 
         if (configured.isEmpty()) {
+            if (successful.isNotEmpty()) {
+                // The process may have died after every channel was delivered but
+                // before the event transition to SENT. Replay durable successes so
+                // the worker can finish that transition instead of finalizing the
+                // event as a failure.
+                return@coroutineScope successful.map { channelId ->
+                    AlertResult.Success("already-delivered", channelId)
+                }
+            }
             Logger.w("No alert channel configured")
             return@coroutineScope emptyList()
         }
