@@ -70,6 +70,7 @@ class Batch93SecurityConcurrencyTest {
         assertThat(current.operation).isEqualTo(EventOperation.CAPTURE)
         assertThat(current.captureAttemptId).isEqualTo(attemptB)
         assertThat(current.retryCount).isEqualTo(1)
+        Unit
     }
 
     @Test
@@ -95,6 +96,7 @@ class Batch93SecurityConcurrencyTest {
         val completed = requireNotNull(events.getById(eventId))
         assertThat(completed.status).isEqualTo(SecurityEventStatus.SENT)
         assertThat(completed.retryCount).isEqualTo(0)
+        Unit
     }
 
     @Test
@@ -125,6 +127,7 @@ class Batch93SecurityConcurrencyTest {
         assertThat(logs.count { it.channelId == "channel-b" && it.status == "RETRYABLE" }).isEqualTo(1)
         assertThat(logs.count { it.channelId == "channel-b" && it.status == "SUCCESS" }).isEqualTo(1)
         assertThat(alerts.getSuccessfulChannels(event.id)).containsExactly("channel-a", "channel-b")
+        Unit
     }
 
     @Test
@@ -145,6 +148,7 @@ class Batch93SecurityConcurrencyTest {
         val recoveredPin = PinPrefs(isolatedContext, PinHasher())
         assertThat(recoveredPin.isPinEnabled.first()).isTrue()
         assertThat(recoveredPin.verifyPin("2468")).isEqualTo(PinPrefs.VerifyResult.Corrupted)
+        Unit
     }
 
     private fun corruptDataStoreFile(context: Context, name: String) {
