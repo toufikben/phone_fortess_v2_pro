@@ -2,9 +2,10 @@
 
 ## Verdict
 
-**BATCH 8 NOT VERIFIED**.
+- **Batch 8 — CI/Unit Verification: VERIFIED**
+- **Batch 8 — Real-device/runtime verification: PENDING**
 
-The source audit identified and fixed several deterministic defects. Static verification passed after the fixes. The Gradle unit-test task could not start because the local Java 21 toolchain does not provide `JAVA_COMPILER`, and no real device or emulator was used. Therefore this report does not claim runtime, reboot, camera, microphone, notification, or permission behavior on Android hardware.
+The source audit identified and fixed several deterministic defects. Static verification passed after the fixes. GitHub Actions then executed the same unit-test task on commit `fce4086ebe3edb7c76fe0838e90795cb9d30807a`: **69 tests passed and 0 failed**, and the complete build job succeeded. No real device or emulator was used, so this report does not claim runtime, reboot, camera, microphone, notification, or permission behavior on Android hardware.
 
 Batch 7.1 remains deferred. This audit does not claim 16 KB AAB runtime support or Play Console readiness.
 
@@ -61,7 +62,7 @@ The audit corrected mixed alert-result handling and connected alert-log retentio
 
 The following checks passed after the source changes: localization validation, security verification, reliability verification, performance verification, UI verification, Python syntax compilation, and `git diff --check`. The performance verifier was updated to recognize the new temporary-file cleanup path.
 
-The command `./gradlew :app:testDebugUnitTest --no-daemon --stacktrace` did not reach compilation. Gradle failed during configuration because `/usr/lib/jvm/java-21-openjdk-amd64` does not provide the required `JAVA_COMPILER`. No unit test result is therefore reported as passed. No instrumentation test, emulator test, reboot test, or physical-device test was run.
+The local environment initially lacked `JAVA_COMPILER`; installing a complete JDK 17 and refreshing the corrupted Robolectric cache allowed the full local suite to pass. GitHub Actions independently ran `./gradlew clean testDebugUnitTest assembleDebug assembleDebugAndroidTest assembleRelease bundleRelease --no-daemon --stacktrace` on the requested commit. The CI log contains **69 `PASSED` results, 0 `FAILED` results**, and `BUILD SUCCESSFUL`. No instrumentation test, emulator test, reboot test, or physical-device test was run.
 
 No new automated unit tests were added in this pass because the relevant defects require Android, WorkManager, provider, or fault-injection seams that cannot be validated in the current JDK environment without creating unverified test scaffolding. The remaining test requirements are listed below.
 
@@ -73,8 +74,16 @@ External alert delivery remains at-least-once unless every provider supports a s
 
 ## CI Run
 
-`<CI run ID not available for this audit>`
+- Workflow: `Android Build`
+- Run ID: `35308138589`
+- Commit: `fce4086ebe3edb7c76fe0838e90795cb9d30807a`
+- Job: `Build and test APK` (`105484450782`)
+- Unit tests: **69 passed, 0 failed**
+- Build result: **success**
+- Instrumentation jobs: skipped because they remain manually gated
 
 ## Final Verdict
 
-**BATCH 8 NOT VERIFIED**. The deterministic source fixes and static checks completed successfully, but the required Gradle test execution and Android runtime evidence are unavailable in this environment.
+**Batch 8 — CI/Unit Verification: VERIFIED.** The source fixes, static checks, full unit-test suite, debug/release builds, and AAB generation completed successfully in GitHub Actions for the requested commit.
+
+**Batch 8 — Real-device/runtime verification: PENDING.** Emulator or physical-device execution is still required for lifecycle, permissions, camera, microphone, notification, reboot, and foreground-service behavior.
