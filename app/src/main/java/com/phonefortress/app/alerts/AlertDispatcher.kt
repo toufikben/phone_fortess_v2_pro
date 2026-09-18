@@ -29,7 +29,7 @@ class AlertDispatcher @Inject constructor(
     suspend fun dispatch(event: SecurityEvent): List<AlertResult> = coroutineScope {
         val payload = AlertTemplate.build(event)
         val configured = channels.filter {
-            runCatching { it.isConfigured() }.getOrDefault(false)
+            runCatching { it.isEnabled() && it.isConfigured() }.getOrDefault(false)
         }
 
         if (configured.isEmpty()) {

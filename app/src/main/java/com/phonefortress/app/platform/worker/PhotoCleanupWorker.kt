@@ -5,6 +5,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.phonefortress.app.data.prefs.SecurityPrefs
+import com.phonefortress.app.data.repository.AlertRepository
 import com.phonefortress.app.data.repository.EventRepository
 import com.phonefortress.app.util.Constants
 import com.phonefortress.app.util.Logger
@@ -20,11 +21,13 @@ class PhotoCleanupWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val eventRepository: EventRepository,
+    private val alertRepository: AlertRepository,
     private val securityPrefs: SecurityPrefs
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result = try {
         val retentionDays = securityPrefs.retentionDays.first()
         val cutoff = System.currentTimeMillis() - retentionDays * 24L * 60 * 60 * 1000
+        alertRepository.cleanup(cutoff)
         val evidenceRoot = File(applicationContext.filesDir, Constants.DIR_EVIDENCE).canonicalFile
         var deletedFiles = 0
         var deletedEvents = 0

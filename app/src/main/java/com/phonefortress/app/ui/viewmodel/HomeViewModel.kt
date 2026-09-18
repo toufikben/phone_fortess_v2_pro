@@ -4,6 +4,7 @@ import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.core.content.ContextCompat
@@ -73,7 +74,7 @@ class HomeViewModel @Inject constructor(
                 val adminActive = isDeviceAdminActive()
                 val permissionsGranted = areRequiredPermissionsGranted()
                 if (active && protectionStartedAt == 0L) {
-                    protectionStartedAt = System.currentTimeMillis()
+                    protectionStartedAt = SystemClock.elapsedRealtime()
                 } else if (!active) {
                     protectionStartedAt = 0
                 }
@@ -134,7 +135,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             while (currentCoroutineContext().isActive) {
                 if (protectionStartedAt > 0) {
-                    val elapsed = System.currentTimeMillis() - protectionStartedAt
+                    val elapsed = SystemClock.elapsedRealtime() - protectionStartedAt
                     _state.update { it.copy(uptimeText = formatUptime(elapsed)) }
                 } else {
                     _state.update { it.copy(uptimeText = "") }

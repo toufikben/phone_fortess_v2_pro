@@ -80,7 +80,7 @@ class LocationProvider @Inject constructor(
             try {
                 client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                     .addOnSuccessListener { loc ->
-                        if (cont.isActive) cont.resume(loc?.toResult())
+                        if (cont.isActive) cont.resume(loc?.takeIf(::isRecent)?.toResult())
                     }
                     .addOnFailureListener {
                         Logger.w("Current location request failed")
@@ -93,7 +93,7 @@ class LocationProvider @Inject constructor(
 
     private fun Location.toResult() = LocationResult(latitude, longitude, accuracy)
 
-    private fun isRecent(loc: Location): Boolean = LocationFreshness.isFresh(loc)
+    private fun isRecent(loc: Location): Boolean = !loc.isMock && LocationFreshness.isFresh(loc)
 
     private fun hasPermission(): Boolean {
         val fine = ContextCompat.checkSelfPermission(

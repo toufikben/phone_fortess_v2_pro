@@ -89,9 +89,6 @@ class GenericSmtpChannel @Inject constructor(
             put("mail.smtp.connectiontimeout", "15000")
             put("mail.smtp.timeout", "15000")
             put("mail.smtp.writetimeout", "15000")
-            if (cfg.useTls) {
-                put("mail.smtp.ssl.trust", cfg.host)
-            }
         }
         return Session.getInstance(props, object : Authenticator() {
             override fun getPasswordAuthentication() =

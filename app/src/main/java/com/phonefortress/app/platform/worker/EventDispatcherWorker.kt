@@ -66,13 +66,13 @@ class EventDispatcherWorker @AssistedInject constructor(
 
         val results = alertDispatcher.dispatch(event)
         return when {
-            results.any { it is AlertResult.Success } -> {
-                eventRepository.transition(event.id, SecurityEventStatus.SENT, "dispatch-success", EventOperation.SEND)
-                DispatchOutcome.DONE
-            }
             results.any { it is AlertResult.Retryable } -> {
                 eventRepository.transition(event.id, SecurityEventStatus.FAILED_RETRYABLE, "dispatch-retryable-failure", EventOperation.SEND)
                 DispatchOutcome.RETRY
+            }
+            results.isNotEmpty() && results.all { it is AlertResult.Success } -> {
+                eventRepository.transition(event.id, SecurityEventStatus.SENT, "dispatch-success", EventOperation.SEND)
+                DispatchOutcome.DONE
             }
             else -> {
                 eventRepository.transition(event.id, SecurityEventStatus.FAILED_FINAL, "dispatch-final-failure", EventOperation.SEND)

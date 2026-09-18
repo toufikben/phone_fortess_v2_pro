@@ -89,8 +89,6 @@ class CameraForegroundService : Service(), LifecycleOwner {
                 Logger.e(e, "Event processing failed")
                 runCatching { markCaptureRetryable(eventId, "capture-exception") }
             } finally {
-                cameraController.release()
-                audioRecorder.release()
                 activeEvents.remove(eventId)
                 if (activeEvents.isEmpty()) {
                     releaseWakeLock()

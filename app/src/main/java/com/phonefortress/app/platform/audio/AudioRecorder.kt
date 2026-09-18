@@ -17,6 +17,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -48,9 +49,10 @@ class AudioRecorder @Inject constructor(
 
                 val file = File(
                     outputDir,
-                    "evidence_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.m4a"
+                    "evidence_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}_${UUID.randomUUID()}.m4a"
                 )
-                outputFile = file
+                val temporaryFile = File(file.parentFile, "${file.name}.tmp")
+                outputFile = temporaryFile
 
                 val rec = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     MediaRecorder(context)
@@ -58,6 +60,7 @@ class AudioRecorder @Inject constructor(
                     @Suppress("DEPRECATION")
                     MediaRecorder()
                 }
+                recorder = rec
 
                 rec.apply {
                     setAudioSource(MediaRecorder.AudioSource.MIC)
@@ -65,15 +68,17 @@ class AudioRecorder @Inject constructor(
                     setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
                     setAudioSamplingRate(44100)
                     setAudioEncodingBitRate(96000)
-                    setOutputFile(file.absolutePath)
+                    setOutputFile(temporaryFile.absolutePath)
                     prepare()
                     start()
                 }
-                recorder = rec
-
                 delay(boundedDurationMs)
 
                 stopAndRelease()
+                if (!temporaryFile.renameTo(file)) {
+                    temporaryFile.delete()
+                    return@withContext null
+                }
                 Logger.i("Audio saved: ${file.name}")
                 file
             } catch (e: CancellationException) {

@@ -27,7 +27,7 @@ if "finally" not in face or "bitmap.recycle()" not in face:
     errors.append("bitmap cleanup is not protected by finally")
 
 camera = text(JAVA / "com/phonefortress/app/platform/camera/CameraController.kt")
-if "invokeOnCancellation" not in camera or "file.delete()" not in camera:
+if "invokeOnCancellation" not in camera or not ("file.delete()" in camera or "temporaryFile.delete()" in camera):
     errors.append("camera cancellation/file cleanup guard missing")
 
 # DAO reads that can feed workers must use LIMIT.

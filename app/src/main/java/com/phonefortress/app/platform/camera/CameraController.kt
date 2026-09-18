@@ -23,6 +23,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import javax.inject.Inject
@@ -67,11 +68,12 @@ class CameraController @Inject constructor(
 
             val file = File(
                 outputDir,
-                "intruder_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.jpg"
+                "intruder_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}_${UUID.randomUUID()}.jpg"
             )
-            outputFile = file
+            val temporaryFile = File(file.parentFile, "${file.name}.tmp")
+            outputFile = temporaryFile
 
-            val options = ImageCapture.OutputFileOptions.Builder(file).build()
+            val options = ImageCapture.OutputFileOptions.Builder(temporaryFile).build()
 
             return@withContext suspendCancellableCoroutine { cont ->
                 capture.takePicture(
@@ -79,13 +81,14 @@ class CameraController @Inject constructor(
                     executor,
                     object : ImageCapture.OnImageSavedCallback {
                         override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                            val moved = temporaryFile.renameTo(file)
                             Logger.i("Photo saved: ${file.name}")
-                            if (cont.isActive) cont.resume(file) else file.delete()
+                            if (cont.isActive) cont.resume(file.takeIf { moved }) else temporaryFile.delete()
                         }
 
                         override fun onError(exception: ImageCaptureException) {
                             Logger.e(exception, "Photo capture failed")
-                            file.delete()
+                            temporaryFile.delete()
                             if (cont.isActive) cont.resume(null)
                         }
                     }

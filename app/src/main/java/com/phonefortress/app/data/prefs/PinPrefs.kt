@@ -12,6 +12,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -22,6 +24,7 @@ class PinPrefs @Inject constructor(
     @ApplicationContext private val context: Context,
     private val hasher: PinHasher
 ) {
+    private val verifyMutex = Mutex()
     private object Keys {
         val PIN_HASH = stringPreferencesKey("pin_hash")
         val PIN_SALT = stringPreferencesKey("pin_salt")
@@ -49,7 +52,7 @@ class PinPrefs @Inject constructor(
         }
     }
 
-    suspend fun verifyPin(pin: String): VerifyResult {
+    suspend fun verifyPin(pin: String): VerifyResult = verifyMutex.withLock {
         val prefs = context.pinDataStore.data.first()
         val hash = prefs[Keys.PIN_HASH] ?: return VerifyResult.NotSet
         val salt = prefs[Keys.PIN_SALT] ?: return VerifyResult.NotSet

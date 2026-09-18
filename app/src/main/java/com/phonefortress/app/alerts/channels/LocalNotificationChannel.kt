@@ -38,7 +38,7 @@ class LocalNotificationChannel @Inject constructor(
 
     override suspend fun isEnabled(): Boolean = prefs.localEnabled.first()
 
-    override suspend fun isConfigured(): Boolean = true
+    override suspend fun isConfigured(): Boolean = isEnabled()
 
     override suspend fun send(event: SecurityEvent, payload: AlertPayload): AlertResult {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -51,9 +51,10 @@ class LocalNotificationChannel @Inject constructor(
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("phone_fortress_event_id", event.id)
+            data = android.net.Uri.parse("phonefortress://event/${event.id}")
         }
         val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent,
+            context, event.id.hashCode(), intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -69,7 +70,8 @@ class LocalNotificationChannel @Inject constructor(
             .build()
 
         val manager = context.getSystemService(NotificationManager::class.java)
-        manager.notify(Constants.NOTIF_ID_ALERT, notification)
+        val notificationId = (event.id.hashCode() and Int.MAX_VALUE).coerceAtLeast(1)
+        manager.notify(notificationId, notification)
         return AlertResult.Success("local-${event.id}", id)
     }
 
