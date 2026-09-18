@@ -153,7 +153,9 @@ class Batch93SecurityConcurrencyTest {
         val file = context.preferencesDataStoreFile(baseName)
         file.parentFile?.mkdirs()
         file.delete()
-        file.writeBytes(byteArrayOf(0x00, 0x01, 0x7f, 0x55))
+        // A truncated length-delimited protobuf field must fail decoding;
+        // arbitrary unknown-field bytes may be accepted as an empty preference set.
+        file.writeBytes(byteArrayOf(0x0A))
     }
 
     private fun event(id: String) = SecurityEvent(
