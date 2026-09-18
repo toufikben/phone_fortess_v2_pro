@@ -10,14 +10,10 @@ import javax.inject.Inject
 class ThreatAnalyzerDemo @Inject constructor(
     private val evaluateThreatUseCase: EvaluateThreatUseCase
 ) {
-    suspend fun runDemo(photoPath: String?) {
-        val result = evaluateThreatUseCase(
+    suspend fun runDemo(photoPath: String?) = evaluateThreatUseCase(
             photoPath = photoPath,
             attempts = 5,
             isInSafeZone = false,
             isTest = true
-        )
-        Logger.i("DEMO: threat evaluation completed")
-        return result
-    }
+        ).also { Logger.i("DEMO: threat evaluation completed") }
 }
