@@ -153,9 +153,9 @@ class Batch93SecurityConcurrencyTest {
         val file = context.preferencesDataStoreFile(baseName)
         file.parentFile?.mkdirs()
         file.delete()
-        // A truncated length-delimited protobuf field must fail decoding;
-        // arbitrary unknown-field bytes may be accepted as an empty preference set.
-        file.writeBytes(byteArrayOf(0x0A))
+        // Declare a 127-byte length-delimited field without supplying its payload.
+        // This is malformed protobuf and cannot be interpreted as an empty preference set.
+        file.writeBytes(byteArrayOf(0x0A, 0x7F))
     }
 
     private fun event(id: String) = SecurityEvent(
