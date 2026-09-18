@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      run_instrumentation:
+        description: Run Android instrumentation tests on the Gradle Managed Device
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -39,6 +45,12 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Set up bundletool
+        run: |
+          curl --fail --location --retry 3 \
+            -o "$RUNNER_TEMP/bundletool-all-1.18.3.jar" \
+            "https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar"
+
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
@@ -68,6 +80,8 @@ jobs:
           test -s app/build/outputs/bundle/release/app-release.aab
 
       - name: Verify production release readiness
+        env:
+          BUNDLETOOL_JAR: ${{ runner.temp }}/bundletool-all-1.18.3.jar
         run: python3 tools/verify_release_readiness.py
 
       - name: Upload debug APK
@@ -110,3 +124,33 @@ jobs:
           path: app/build/reports/tests/testDebugUnitTest
           if-no-files-found: ignore
           retention-days: 14
+
+  instrumentation:
+    name: Managed device instrumentation tests
+    if: github.event_name == 'workflow_dispatch' && inputs.run_instrumentation == true
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK and API 35 system image
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-35 system-images;android-35;default;x86_64'
+          accept-android-sdk-licenses: true
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Run Managed Device instrumentation tests
+        run: ./gradlew pixel2api35DebugAndroidTest --no-daemon --stacktrace

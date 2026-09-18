@@ -4,6 +4,7 @@ import re
 import shutil
 import subprocess
 import sys
+import os
 import zipfile
 from pathlib import Path
 import xml.etree.ElementTree as ET
@@ -121,6 +122,22 @@ if aab.is_file() and aab.stat().st_size:
             warnings.append("AAB contains native libraries; final bundletool PAGE_ALIGNMENT_16K verification remains required")
         else:
             warnings.append("AAB has no base native libraries; transitive modules still require bundletool inspection")
+
+        bundletool_jar = os.environ.get("BUNDLETOOL_JAR")
+        if bundletool_jar and Path(bundletool_jar).is_file():
+            config = subprocess.run(
+                ["java", "-jar", bundletool_jar, "dump", "config", "--bundle", str(aab)],
+                text=True,
+                capture_output=True,
+            )
+            if config.returncode != 0:
+                errors.append(f"bundletool dump config failed: {config.stderr.strip()}")
+            elif "PAGE_ALIGNMENT_16K" not in config.stdout:
+                errors.append("bundletool did not report PAGE_ALIGNMENT_16K for the release AAB")
+            else:
+                print("AAB PAGE_ALIGNMENT_16K verified with bundletool")
+        else:
+            warnings.append("bundletool JAR unavailable; AAB PAGE_ALIGNMENT_16K remains UNVERIFIED")
 
 print("Release readiness verification")
 print(f"APK: {'present' if apk.is_file() and apk.stat().st_size else 'missing'}")
