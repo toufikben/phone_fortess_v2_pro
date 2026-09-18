@@ -55,7 +55,7 @@ class SecurityPrefsTest {
     fun `process recreation reads the consumed counter state`() = runBlocking {
         prefs.incrementAttemptsAndCheckThreshold(2)
         prefs.incrementAttemptsAndCheckThreshold(2)
-        val recreated = SecurityPrefs(ApplicationProvider.getApplicationContext())
+        val recreated = SecurityPrefs(ApplicationProvider.getApplicationContext<Context>())
         assertThat(recreated.consecutiveAttempts.firstValue()).isEqualTo(0)
     }
 
