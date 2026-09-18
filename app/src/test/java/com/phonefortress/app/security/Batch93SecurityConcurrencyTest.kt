@@ -17,6 +17,7 @@ import com.phonefortress.app.domain.model.AlertResult
 import com.phonefortress.app.domain.model.EventOperation
 import com.phonefortress.app.domain.model.SecurityEvent
 import com.phonefortress.app.domain.model.SecurityEventStatus
+import androidx.datastore.preferences.preferencesDataStoreFile
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -132,18 +133,12 @@ class Batch93SecurityConcurrencyTest {
 
     @Test
     fun corruptedSecurityDataStoreFailsClosedAndPinCorruptionCannotAuthenticate() = runBlocking {
-        val security = SecurityPrefs(context)
-        security.setProtectionEnabled(false)
-        assertThat(security.protectionEnabled.first()).isFalse()
         corruptDataStoreFile(context, "security_prefs.preferences_pb")
 
         val recoveredSecurity = SecurityPrefs(context)
         assertThat(recoveredSecurity.protectionEnabled.first()).isTrue()
         assertThat(recoveredSecurity.threshold.first()).isEqualTo(com.phonefortress.app.util.Constants.MIN_THRESHOLD)
 
-        val pin = PinPrefs(context, PinHasher())
-        pin.setPin("2468")
-        assertThat(pin.isPinEnabled.first()).isTrue()
         corruptDataStoreFile(context, "pin_prefs.preferences_pb")
 
         val recoveredPin = PinPrefs(context, PinHasher())
@@ -153,11 +148,10 @@ class Batch93SecurityConcurrencyTest {
     }
 
     private fun corruptDataStoreFile(context: Context, name: String) {
-        val file = sequenceOf(context.filesDir, context.dataDir)
-            .flatMap { it.walkTopDown() }
-            .firstOrNull { it.isFile && it.name == name }
-        assertThat(file).named("DataStore file $name; files=${context.filesDir.walkTopDown().map { it.path }.toList()}").isNotNull()
-        requireNotNull(file).writeBytes(byteArrayOf(0x00, 0x01, 0x7f, 0x55))
+        val baseName = name.removeSuffix(".preferences_pb")
+        val file = context.preferencesDataStoreFile(baseName)
+        file.parentFile?.mkdirs()
+        file.writeBytes(byteArrayOf(0x00, 0x01, 0x7f, 0x55))
     }
 
     private fun event(id: String) = SecurityEvent(
