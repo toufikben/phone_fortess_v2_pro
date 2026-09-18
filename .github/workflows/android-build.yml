@@ -161,4 +161,17 @@ jobs:
           profile: pixel_2
           emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot
           disable-animations: true
-          script: ./gradlew connectedDebugAndroidTest --no-daemon --stacktrace
+          script: |
+            adb kill-server || true
+            adb start-server
+            for attempt in $(seq 1 60); do
+              state="$(adb get-state 2>/dev/null || true)"
+              boot="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+              if [ "$state" = "device" ] && [ "$boot" = "1" ]; then
+                break
+              fi
+              sleep 2
+            done
+            test "$(adb get-state)" = "device"
+            test "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1"
+            ./gradlew connectedDebugAndroidTest --no-daemon --stacktrace
