@@ -3,10 +3,10 @@
 ## Verdict
 
 - **Batch 9 — Static fixes and local regression: PASS**
-- **Batch 9 — CI verification: PENDING**
+- **Batch 9 — CI verification: VERIFIED**
 - **Batch 9 — Real-device/runtime verification: PENDING**
 
-Batch 9 is not marked VERIFIED yet. The static audit found concrete issues, fixes were applied, and the local regression suite passed. GitHub Actions and device/emulator execution remain required before the final verdict.
+Batch 9 is not marked fully VERIFIED yet. The static audit found concrete issues, fixes were applied, the local regression suite passed, and GitHub Actions verified the repository build and checks. Device/emulator execution and the documented high-impact residual concurrency/delivery risks remain open.
 
 ## Threat Model and Attack Surface
 
@@ -53,10 +53,12 @@ Local release readiness detected the expected APK and AAB but remained **UNVERIF
 
 ## CI
 
-- Required commit: the Batch 9 fix commit will be recorded after push.
-- Run ID: pending.
-- Job: pending.
-- Required result: 72 unit tests pass, all verifiers pass, and release build/readiness steps succeed.
+- Commit: `9e82ed5418799ce97c55d8d1e47a6835fca761dc`
+- Run ID: `35312338528`
+- Job: `Build and test APK` (`105496764721`)
+- Unit tests: **73 PASSED, 0 FAILED** in the CI log.
+- CI result: **success**.
+- Verifiers: localization, security, reliability, performance, UI, release readiness, and AAB `PAGE_ALIGNMENT_16K` all passed.
 - No emulator job is added in Batch 9; Batch 7.1 and real-device testing remain pending.
 
 ## Limitations
@@ -65,4 +67,4 @@ No physical device test was executed. No emulator or Gradle Managed Device test 
 
 ## Final Verdict
 
-**BATCH 9 NOT VERIFIED — CI and runtime evidence pending.** Static fixes and 72-test local regression passed, but the strict final verdict requires successful GitHub Actions on the resulting commit and must retain the documented real-device/runtime and external-delivery limitations.
+**BATCH 9 NOT VERIFIED.** CI/Unit verification is verified: 73 tests passed, all required CI verifiers passed, release artifacts passed readiness checks, and AAB `PAGE_ALIGNMENT_16K` was verified. The full Batch 9 verdict remains open because high-impact lease/fencing and exactly-once external-delivery risks remain documented, and no physical device, emulator, or runtime fault-injection testing was performed.
