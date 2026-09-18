@@ -2,9 +2,9 @@
 
 ## Verdict
 
-**BATCH 9.1 NOT VERIFIED.**
+**BATCH 9.1 NOT VERIFIED. Batch 9.2 — Verification: PASS for CI/build/migration gates.**
 
-The four residual Batch 9 risks were found in the implementation and targeted fixes were added. Static security, localization, performance, UI, reliability, and diff checks passed. The required Gradle regression could not be completed in this session because the Android SDK is not available.
+The four residual Batch 9 risks were found in the implementation and targeted fixes were added. Static security, localization, performance, UI, reliability, and diff checks passed. GitHub Actions independently completed the Android SDK-backed Gradle regression and artifact checks.
 
 ## Findings
 
@@ -66,7 +66,7 @@ The following impossible states remain guarded by existing state-machine transit
 
 The code changes are designed for deterministic fault injection using conditional Room updates and persisted tokens rather than sleeps or process-local booleans. No test in this report is described as real process-death testing. A process-like interruption must still be represented by a deterministic test that abandons an owner and lets recovery acquire a new token.
 
-**Executed new-test count:** 0 confirmed in this session because the Gradle task did not reach compilation.
+**Executed unit-test count:** 76 passed, 0 failed, 0 ignored in CI. `RoomMigrationTest` contains 7 passing tests, including `chainedMigration4To7PreservesLegacyEventAndBuildsFinalSchema`. The CI report proves the migration/build path, but does not replace the missing deterministic fault-injection tests for all four residual risks.
 
 ## Regression Results
 
@@ -78,19 +78,19 @@ The code changes are designed for deterministic fault injection using conditiona
 | Performance verifier | PASS | `tools/verify_performance_configuration.py` |
 | Compose/UI verifier | PASS | `tools/verify_ui_quality.py` |
 | Reliability verifier | PASS | Updated to require Room version 7, `MIGRATION_6_7`, and persisted ownership columns |
-| Release-readiness verifier | NOT RUNNABLE | Release artifacts absent because Gradle did not build |
-| `./gradlew testDebugUnitTest` | NOT RUNNABLE | Android SDK location not found |
-| Full requested Gradle command | NOT RUNNABLE | Android SDK location not found |
+| Release-readiness verifier | PASS | GitHub Actions run `35326480669` |
+| `./gradlew clean testDebugUnitTest assembleDebug assembleDebugAndroidTest assembleRelease bundleRelease` | PASS in CI | GitHub Actions run `35326480669`; `BUILD SUCCESSFUL` |
 | Emulator / bundletool | NOT RUN | Explicitly out of scope for this task |
 
-The initial Gradle attempt also exposed a missing local Java compiler; OpenJDK 21 JDK was installed, after which the blocking failure was the absent Android SDK. No emulator or bundletool was started.
+The local Gradle attempt was blocked by the absent Android SDK. GitHub Actions provided independent Android SDK-backed verification. No emulator or managed-device job was run because those jobs are manual and were skipped.
 
 ## CI
 
-- **Commit:** Working tree based on `59cd9ca65a0ab779115c582b8caa441a0832968f`; new hardening changes are not yet CI-verified.
-- **Run ID:** None for Batch 9.1.
-- **Job:** None for Batch 9.1.
-- **Result:** NOT VERIFIED. Prior Batch 9 CI (`35312338528`) is historical evidence only and does not verify these changes.
+- **Commit:** `044ac550fd9329b95be5567fd8882314deab39a5`.
+- **Run ID:** `35326480669`.
+- **Job:** `Build and test APK` (`105540598210`).
+- **Result:** SUCCESS. 76 unit tests passed; localization, security, reliability, performance, Compose/UI, release-readiness, and AAB 16 KB checks passed.
+- **Artifacts:** Debug APK, unsigned release APK, Android Test APK, unsigned release AAB, and unit-test report uploaded successfully.
 
 ## Security Review After Fix
 
@@ -98,10 +98,10 @@ The new protocol was reviewed across State Machine, Capture, Send, Retry, Recove
 
 ## Remaining Risks
 
-The following are verified limitations of this run, not speculative findings: Android SDK-backed Gradle regression has not run; the new deterministic fault-injection tests have not been executed; no physical device or emulator test was performed; production signing remains outside the repository; and Batch 7.1 remains pending. These are not Batch 9.1 failures caused by the fixes, but they prevent a `VERIFIED` verdict here. No claim is made for real-device verification or real process death.
+The following are verified limitations of this run, not speculative findings: dedicated deterministic fault-injection tests for the four residual risks are not yet complete; no physical device or emulator test was performed; production signing remains outside the repository; and Batch 7.1 remains pending. The first item is in Batch 9.1 scope and prevents a `VERIFIED` verdict. The other items remain outside Batch 9.1 scope. No claim is made for real-device verification or real process death.
 
 ## Final Verdict
 
-**BATCH 9.1 NOT VERIFIED.**
+**BATCH 9.1 NOT VERIFIED. Batch 9.2 — Verification: PASS for the CI/build/migration gate.**
 
-The implementation contains persisted capture-attempt fencing, persisted send-owner fencing, persisted per-channel retry suppression, and fail-closed security preference corruption handling. The Reliability verifier now recognizes Room version 7 and the `6 → 7` migration test covers both new nullable ownership columns. The required Gradle proof and full regression gates are not all green in this environment, so `VERIFIED` would be unsupported.
+The implementation contains persisted capture-attempt fencing, persisted send-owner fencing, persisted per-channel retry suppression, and fail-closed security preference corruption handling. CI verified the full requested Gradle command, 76 passing unit tests, the 7-test Room migration suite including the chained 4→5→6→7 path, all configured verifiers, and all requested build artifacts. Batch 9.2 is verified for its CI/build/migration gate. Batch 9.1 remains not verified because the deterministic proof suite required for the four residual risks is not complete; marking it `VERIFIED` would overstate the evidence.
