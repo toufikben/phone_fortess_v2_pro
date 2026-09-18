@@ -152,6 +152,7 @@ class Batch93SecurityConcurrencyTest {
         val baseName = name.removeSuffix(".preferences_pb")
         val file = context.preferencesDataStoreFile(baseName)
         file.parentFile?.mkdirs()
+        file.delete()
         file.writeBytes(byteArrayOf(0x00, 0x01, 0x7f, 0x55))
     }
 
