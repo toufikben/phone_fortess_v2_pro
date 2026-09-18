@@ -5,7 +5,12 @@ import com.google.common.truth.Truth.assertThat
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class CameraControllerTest {
     @Test
     fun cancellationAfterRenameDeletesFinalEvidenceFile() {
