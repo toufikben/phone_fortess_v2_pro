@@ -1,6 +1,7 @@
 package com.phonefortress.app.security
 
 import android.content.Context
+import android.content.ContextWrapper
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
@@ -26,7 +27,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -133,7 +133,7 @@ class Batch93SecurityConcurrencyTest {
 
     @Test
     fun corruptedSecurityDataStoreFailsClosedAndPinCorruptionCannotAuthenticate() = runBlocking {
-        val isolatedContext = context.createDeviceProtectedStorageContext()
+        val isolatedContext = ContextWrapper(context.createDeviceProtectedStorageContext())
         corruptDataStoreFile(isolatedContext, "security_prefs.preferences_pb")
 
         val recoveredSecurity = SecurityPrefs(isolatedContext)
