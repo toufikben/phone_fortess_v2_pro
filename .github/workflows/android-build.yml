@@ -67,6 +67,9 @@ jobs:
           test -s app/build/outputs/apk/release/app-release-unsigned.apk
           test -s app/build/outputs/bundle/release/app-release.aab
 
+      - name: Verify production release readiness
+        run: python3 tools/verify_release_readiness.py
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:

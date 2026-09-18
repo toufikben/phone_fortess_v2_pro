@@ -53,6 +53,10 @@ android {
     }
 
     packaging {
+        jniLibs {
+            // Keep shared libraries uncompressed for 16 KB page-size packaging checks.
+            useLegacyPackaging = false
+        }
         resources {
             excludes += setOf(
                 "/META-INF/{AL2.0,LGPL2.1}",
