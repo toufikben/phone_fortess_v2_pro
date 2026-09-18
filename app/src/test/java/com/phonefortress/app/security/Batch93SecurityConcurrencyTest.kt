@@ -1,9 +1,14 @@
 package com.phonefortress.app.security
 
 import android.content.Context
-import android.content.ContextWrapper
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import androidx.datastore.core.DataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.preferencesOf
 import com.google.common.truth.Truth.assertThat
 import com.phonefortress.app.alerts.AlertDispatcher
 import com.phonefortress.app.data.crypto.PinHasher
@@ -133,24 +138,24 @@ class Batch93SecurityConcurrencyTest {
 
     @Test
     fun corruptedSecurityDataStoreFailsClosedAndPinCorruptionCannotAuthenticate() = runBlocking {
-        val isolatedContext = IsolatedDataStoreContext(context.createDeviceProtectedStorageContext())
-        corruptDataStoreFile(isolatedContext, "security_prefs.preferences_pb")
+        val isolatedContext = context.createDeviceProtectedStorageContext()
+        val securityFile = isolatedContext.preferencesDataStoreFile("batch93-security-corruption")
+        corruptDataStoreFile(securityFile)
 
-        val recoveredSecurity = SecurityPrefs(isolatedContext)
+        val recoveredSecurity = SecurityPrefs(newPreferenceDataStore(securityFile))
         assertThat(recoveredSecurity.protectionEnabled.first()).isTrue()
         assertThat(recoveredSecurity.threshold.first()).isEqualTo(com.phonefortress.app.util.Constants.MIN_THRESHOLD)
 
-        corruptDataStoreFile(isolatedContext, "pin_prefs.preferences_pb")
+        val pinFile = isolatedContext.preferencesDataStoreFile("batch93-pin-corruption")
+        corruptDataStoreFile(pinFile)
 
-        val recoveredPin = PinPrefs(isolatedContext, PinHasher())
+        val recoveredPin = PinPrefs(newPreferenceDataStore(pinFile), PinHasher())
         assertThat(recoveredPin.isPinEnabled.first()).isTrue()
         assertThat(recoveredPin.verifyPin("2468")).isEqualTo(PinPrefs.VerifyResult.Corrupted)
         Unit
     }
 
-    private fun corruptDataStoreFile(context: Context, name: String) {
-        val baseName = name.removeSuffix(".preferences_pb")
-        val file = context.preferencesDataStoreFile(baseName)
+    private fun corruptDataStoreFile(file: java.io.File) {
         file.parentFile?.mkdirs()
         file.delete()
         // Declare a 127-byte length-delimited field without supplying its payload.
@@ -158,9 +163,13 @@ class Batch93SecurityConcurrencyTest {
         file.writeBytes(byteArrayOf(0x0A, 0x7F))
     }
 
-    private class IsolatedDataStoreContext(base: Context) : ContextWrapper(base) {
-        override fun getApplicationContext(): Context = this
-    }
+    private fun newPreferenceDataStore(file: java.io.File): DataStore<Preferences> =
+        PreferenceDataStoreFactory.create(
+            corruptionHandler = ReplaceFileCorruptionHandler {
+                preferencesOf(booleanPreferencesKey("corruption_detected") to true)
+            },
+            produceFile = { file }
+        )
 
     private fun event(id: String) = SecurityEvent(
         id = id,
