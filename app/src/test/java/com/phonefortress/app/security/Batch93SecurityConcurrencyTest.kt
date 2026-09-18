@@ -133,7 +133,7 @@ class Batch93SecurityConcurrencyTest {
 
     @Test
     fun corruptedSecurityDataStoreFailsClosedAndPinCorruptionCannotAuthenticate() = runBlocking {
-        val isolatedContext = ContextWrapper(context.createDeviceProtectedStorageContext())
+        val isolatedContext = IsolatedDataStoreContext(context.createDeviceProtectedStorageContext())
         corruptDataStoreFile(isolatedContext, "security_prefs.preferences_pb")
 
         val recoveredSecurity = SecurityPrefs(isolatedContext)
@@ -156,6 +156,10 @@ class Batch93SecurityConcurrencyTest {
         // Declare a 127-byte length-delimited field without supplying its payload.
         // This is malformed protobuf and cannot be interpreted as an empty preference set.
         file.writeBytes(byteArrayOf(0x0A, 0x7F))
+    }
+
+    private class IsolatedDataStoreContext(base: Context) : ContextWrapper(base) {
+        override fun getApplicationContext(): Context = this
     }
 
     private fun event(id: String) = SecurityEvent(
