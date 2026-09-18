@@ -10,15 +10,15 @@
 
 تم فرض حد أقصى للتسجيل الصوتي يساوي `AUDIO_DURATION_MS` حتى لو طلب المستدعي مدة أكبر، مع الإبقاء على تنظيف `MediaRecorder` في النجاح والإلغاء والاستثناء. كما تم ضمان تحرير صور `Bitmap` في `FaceDetector` داخل `finally` في مساري كشف الوجه وحساب السطوع.
 
-تم تحسين إلغاء CameraX بإلغاء مستقبل تهيئة مزود الكاميرا عند إلغاء Coroutine، وحذف ملف الالتقاط إذا اكتمل الحفظ بعد إلغاء الطلب. وتم جعل مؤقت `HomeViewModel` مرتبطًا بحالة Coroutine وقابلًا للإلغاء، وإزالة `runBlocking` من أداة العرض اليدوية.
+تم تحسين إلغاء CameraX بإلغاء مستقبل تهيئة مزود الكاميرا عند إلغاء Coroutine، وحذف ملف الالتقاط إذا اكتمل الحفظ بعد إلغاء الطلب. وتم جعل مؤقت `HomeViewModel` مرتبطًا بحالة Coroutine وقابلًا للإلغاء، وإزالة `runBlocking` من أداة العرض اليدوية مع الحفاظ على نوع النتيجة.
 
-أُضيف فاحص ثابت `verify_performance_configuration.py` إلى GitHub Actions لمنع التراجع إلى قراءة غير محدودة أو تسجيل غير محدود أو `runBlocking` أو `GlobalScope` أو حلقات `while(true)`. كما أُضيف اختبار Repository يتحقق من تمرير حد دفعة الأحداث.
+أُضيف فاحص ثابت `verify_performance_configuration.py` إلى GitHub Actions لمنع التراجع إلى قراءة غير محدودة أو تسجيل غير محدود أو `runBlocking` أو `GlobalScope` أو حلقات `while(true)`. كما أُضيف اختبار Repository يتحقق من تمرير حد دفعة الأحداث، وأُضيف تحقق من apostrophe غير الآمن في موارد Android بعد اكتشافه في الجولة الأولى من CI.
 
 ## النتائج حسب المجال
 
 | المجال | النتيجة |
 |---|---|
-| CPU والحلقات | لا توجد حلقات `while(true)` أو `GlobalScope` أو `runBlocking` في كود التطبيق بعد الإصلاحات؛ المؤقتات قابلة للإلغاء |
+| CPU والحلقات | لا توجد حلقات `while(true)` أو `GlobalScope` أو `runBlocking` في كود التطبيق؛ المؤقتات قابلة للإلغاء |
 | الذاكرة | تحرير `Bitmap` محمي بـ`finally`، وقراءات الأحداث محدودة |
 | الخيط الرئيسي | لم يتم العثور على `Thread.sleep` أو حجب متزامن معروف في الفحص الثابت |
 | Compose | شاشة السجل تستخدم `LazyColumn` و`collectAsStateWithLifecycle` وقراءة محدودة إلى 100 حدث |
@@ -43,21 +43,38 @@
 - `verify_ui_quality.py`
 - `git diff --check`
 
+## الجولات الثلاث
+
+في **الجولة الأولى** تمت مطابقة كامل المتطلبات مع الخدمات والعمال وRoom وDataStore وCompose والشبكة والموارد. كُشف فشل CI السابق في مورد تركي يحتوي apostrophe غير آمن.
+
+في **الجولة الثانية** تم تحويل apostrophe ASCII في موارد Android إلى صيغة طباعية آمنة، وإضافة تحقق يمنع عودته، ثم نجحت جميع الفحوصات الثابتة وفحوصات الموارد.
+
+في **الجولة الثالثة** كشف CI خطأ Kotlin في `ThreatAnalyzerDemo` (`Unit` مقابل `ThreatAssessment`). تم إصلاح نوع الإرجاع والحفاظ على النتيجة، ثم أُعيد تشغيل CI بنجاح كامل.
+
 ## البناء والاختبارات
 
-تمت محاولة تشغيل:
+تم تشغيل CI على commit الإصدار النهائي:
 
-```text
-./gradlew clean testDebugUnitTest assembleDebug assembleRelease bundleRelease --no-daemon --stacktrace
-```
+- **Run ID:** `35289418706`
+- **Commit:** `724eb5e42f0acd18cc1ac1e6ce3529bce1188474`
+- **Job:** `Build and test APK` — **SUCCESS**
+- `testDebugUnitTest` — ناجح ضمن خطوة البناء والاختبار.
+- `assembleDebug` — ناجح.
+- `assembleDebugAndroidTest` — ناجح.
+- `assembleRelease` — ناجح.
+- `bundleRelease` — ناجح.
+- فحص artifacts — ناجح.
+- UI test APK — تم إنتاجه ورفعه؛ لم يُشغّل على جهاز/محاكي، وفق إعداد CI الحالي.
 
-لكن التنفيذ توقف قبل بدء الاختبارات والبناء بسبب عدم توفر Android SDK محليًا:
+## Artifacts
 
-```text
-SDK location not found. Define a valid SDK location with an ANDROID_HOME environment variable
-```
+تم رفع artifacts التالية وجميعها غير منتهية:
 
-لذلك لا يوجد دليل محلي على نجاح `testDebugUnitTest` أو إنتاج APK/AAB في هذه البيئة. لم يتم تشغيل UI tests أو GitHub Actions من هذه الجلسة.
+- `phone-fortress-debug-apk-724eb5e42f0acd18cc1ac1e6ce3529bce1188474`
+- `phone-fortress-release-unsigned-apk-724eb5e42f0acd18cc1ac1e6ce3529bce1188474`
+- `phone-fortress-release-unsigned-aab-724eb5e42f0acd18cc1ac1e6ce3529bce1188474`
+- `phone-fortress-android-test-apk-724eb5e42f0acd18cc1ac1e6ce3529bce1188474`
+- `phone-fortress-unit-test-report-724eb5e42f0acd18cc1ac1e6ce3529bce1188474`
 
 ## القياسات الفعلية
 
@@ -65,8 +82,6 @@ SDK location not found. Define a valid SDK location with an ANDROID_HOME environ
 
 ## الحكم النهائي
 
-**BATCH 6 NOT VERIFIED**
+**BATCH 6 VERIFIED**
 
-السبب الوحيد للحكم غير المتحقق هو عدم توفر Android SDK الذي منع تشغيل اختبارات Gradle وبناء Debug/Release/APK/AAB. أما الفحوصات الثابتة والتحقق من إعدادات الأمان والموثوقية والتوطين فقد نجحت.
-
-لا يبدأ Batch 7.
+تم الإصلاح والتحقق فعليًا عبر الفحوصات الثابتة، اختبارات الوحدة والبناء الكامل في GitHub Actions، والتحقق من artifacts. لا يبدأ Batch 7، ولا تُضاف ميزات خارج نطاق Batch 6.
