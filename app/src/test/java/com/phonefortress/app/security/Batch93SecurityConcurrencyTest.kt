@@ -133,15 +133,16 @@ class Batch93SecurityConcurrencyTest {
 
     @Test
     fun corruptedSecurityDataStoreFailsClosedAndPinCorruptionCannotAuthenticate() = runBlocking {
-        corruptDataStoreFile(context, "security_prefs.preferences_pb")
+        val isolatedContext = context.createDeviceProtectedStorageContext()
+        corruptDataStoreFile(isolatedContext, "security_prefs.preferences_pb")
 
-        val recoveredSecurity = SecurityPrefs(context)
+        val recoveredSecurity = SecurityPrefs(isolatedContext)
         assertThat(recoveredSecurity.protectionEnabled.first()).isTrue()
         assertThat(recoveredSecurity.threshold.first()).isEqualTo(com.phonefortress.app.util.Constants.MIN_THRESHOLD)
 
-        corruptDataStoreFile(context, "pin_prefs.preferences_pb")
+        corruptDataStoreFile(isolatedContext, "pin_prefs.preferences_pb")
 
-        val recoveredPin = PinPrefs(context, PinHasher())
+        val recoveredPin = PinPrefs(isolatedContext, PinHasher())
         assertThat(recoveredPin.isPinEnabled.first()).isTrue()
         assertThat(recoveredPin.verifyPin("2468")).isEqualTo(PinPrefs.VerifyResult.Corrupted)
         Unit
