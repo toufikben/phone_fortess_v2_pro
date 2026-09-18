@@ -134,3 +134,17 @@ The following remain outside the proven scope: physical-device testing, emulator
 - **Batch 9.1:** cannot be marked VERIFIED because the DataStore corruption/fail-closed scenario remains failing.
 - **Batch 9.2:** remains previously verified for its CI/build/migration gate by run `35326480669`; it was not invalidated by this separate Batch 9.3 failure.
 - **Batch 10:** not started, as required.
+
+
+## Latest re-verification after DataStore fixture review
+
+The test was reviewed repeatedly and the fixture was revised through these additional commits:
+
+- `c10df89`: replaced permissive arbitrary bytes with malformed protobuf bytes.
+- `fd477f0`: used a fresh `ContextWrapper` to isolate the DataStore instance.
+- `bed5e97`: used a definitely truncated length-delimited protobuf field (`0A 7F`).
+- `e9ea587`: forced the wrapper’s `applicationContext` to reference itself so the fixture and production delegate use the same context identity.
+
+All local static verifiers continued to pass after these changes. The latest GitHub Actions run was **`35336438654`**, testing commit `e9ea587`. Its JUnit artifact recorded **80 tests, 79 passing, 1 failing, and 0 ignored**. The three concurrency/idempotency scenarios passed again. The DataStore test still failed at `recoveredSecurity.protectionEnabled.first()` with `expected to be true`; the PIN assertions were not reached.
+
+Therefore the fixture is not yet a proof of the production corruption path, and Batch 9.3 remains **NOT VERIFIED**. No further production behavior is claimed from this run.
