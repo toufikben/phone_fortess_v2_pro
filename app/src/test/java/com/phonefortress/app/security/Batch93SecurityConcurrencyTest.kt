@@ -152,9 +152,11 @@ class Batch93SecurityConcurrencyTest {
     }
 
     private fun corruptDataStoreFile(context: Context, name: String) {
-        val file = File(context.filesDir, "datastore/$name")
-        assertThat(file.exists()).isTrue()
-        file.writeBytes(byteArrayOf(0x00, 0x01, 0x7f, 0x55))
+        val file = sequenceOf(context.filesDir, context.dataDir)
+            .flatMap { it.walkTopDown() }
+            .firstOrNull { it.isFile && it.name == name }
+        assertThat(file).isNotNull()
+        requireNotNull(file).writeBytes(byteArrayOf(0x00, 0x01, 0x7f, 0x55))
     }
 
     private fun event(id: String) = SecurityEvent(
