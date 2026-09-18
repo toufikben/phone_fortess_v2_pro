@@ -42,6 +42,7 @@ class AlertRepository @Inject constructor(
     fun observeRecent(limit: Int = 100) = dao.observeRecent(limit)
 
     suspend fun getByEvent(eventId: String) = dao.getByEvent(eventId)
+    suspend fun getSuccessfulChannels(eventId: String): Set<String> = dao.getSuccessfulChannels(eventId).toSet()
 
     suspend fun cleanup(beforeTimestamp: Long) = dao.deleteOlderThan(beforeTimestamp)
 }

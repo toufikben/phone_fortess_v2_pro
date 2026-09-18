@@ -15,6 +15,9 @@ interface AlertLogDao {
     @Query("SELECT * FROM alert_logs WHERE eventId = :eventId ORDER BY timestamp DESC")
     suspend fun getByEvent(eventId: String): List<AlertLogEntity>
 
+    @Query("SELECT channelId FROM alert_logs WHERE eventId = :eventId AND status = 'SUCCESS' GROUP BY channelId")
+    suspend fun getSuccessfulChannels(eventId: String): List<String>
+
     @Query("SELECT * FROM alert_logs ORDER BY timestamp DESC LIMIT :limit")
     fun observeRecent(limit: Int = 100): Flow<List<AlertLogEntity>>
 

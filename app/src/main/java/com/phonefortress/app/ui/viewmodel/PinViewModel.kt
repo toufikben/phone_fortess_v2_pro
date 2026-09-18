@@ -68,6 +68,7 @@ class PinViewModel @Inject constructor(
             when (val result = pinPrefs.verifyPin(pin)) {
                 PinPrefs.VerifyResult.Success -> _gateState.update { it.copy(isUnlocked = true, pin = "") }
                 PinPrefs.VerifyResult.NotSet -> _gateState.update { it.copy(errorMessage = "لم يتم إعداد PIN", pin = "") }
+                PinPrefs.VerifyResult.Corrupted -> _gateState.update { it.copy(errorMessage = "بيانات PIN تالفة؛ الحماية مقفلة", pin = "") }
                 is PinPrefs.VerifyResult.WrongPin -> _gateState.update { it.copy(errorMessage = "رمز غير صحيح · المتبقي ${result.remainingAttempts}", pin = "") }
                 is PinPrefs.VerifyResult.LockedOut -> { _gateState.update { it.copy(pin = "") }; startLockout(result.until) }
             }

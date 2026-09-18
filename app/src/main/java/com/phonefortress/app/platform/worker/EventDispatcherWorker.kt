@@ -62,21 +62,18 @@ class EventDispatcherWorker @AssistedInject constructor(
             eventRepository.transition(event.id, SecurityEventStatus.FAILED_FINAL, "retry-budget-exhausted", EventOperation.SEND)
             return DispatchOutcome.FAILED
         }
-        if (!eventRepository.claimForSend(event.id)) return DispatchOutcome.SKIPPED
+        val ownerToken = eventRepository.claimForSend(event.id) ?: return DispatchOutcome.SKIPPED
 
         val results = alertDispatcher.dispatch(event)
         return when {
             results.any { it is AlertResult.Retryable } -> {
-                eventRepository.transition(event.id, SecurityEventStatus.FAILED_RETRYABLE, "dispatch-retryable-failure", EventOperation.SEND)
-                DispatchOutcome.RETRY
+                if (eventRepository.transitionSendOwned(event.id, SecurityEventStatus.SEND_PENDING, SecurityEventStatus.FAILED_RETRYABLE, ownerToken, "dispatch-retryable-failure")) DispatchOutcome.RETRY else DispatchOutcome.SKIPPED
             }
             results.isNotEmpty() && results.all { it is AlertResult.Success } -> {
-                eventRepository.transition(event.id, SecurityEventStatus.SENT, "dispatch-success", EventOperation.SEND)
-                DispatchOutcome.DONE
+                if (eventRepository.transitionSendOwned(event.id, SecurityEventStatus.SEND_PENDING, SecurityEventStatus.SENT, ownerToken, "dispatch-success")) DispatchOutcome.DONE else DispatchOutcome.SKIPPED
             }
             else -> {
-                eventRepository.transition(event.id, SecurityEventStatus.FAILED_FINAL, "dispatch-final-failure", EventOperation.SEND)
-                DispatchOutcome.FAILED
+                if (eventRepository.transitionSendOwned(event.id, SecurityEventStatus.SEND_PENDING, SecurityEventStatus.FAILED_FINAL, ownerToken, "dispatch-final-failure")) DispatchOutcome.FAILED else DispatchOutcome.SKIPPED
             }
         }
     }

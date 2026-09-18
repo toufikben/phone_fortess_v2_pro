@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import androidx.datastore.preferences.core.preferencesOf
 import com.phonefortress.app.data.crypto.PinHasher
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -17,7 +19,11 @@ import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.pinDataStore by preferencesDataStore(name = "pin_prefs")
+private val pinCorruptedKey = booleanPreferencesKey("corruption_detected")
+private val Context.pinDataStore by preferencesDataStore(
+    name = "pin_prefs",
+    corruptionHandler = ReplaceFileCorruptionHandler { preferencesOf(pinCorruptedKey to true) }
+)
 
 @Singleton
 class PinPrefs @Inject constructor(
@@ -35,7 +41,7 @@ class PinPrefs @Inject constructor(
         val LAST_UNLOCK = longPreferencesKey("last_unlock_at")
     }
 
-    val isPinEnabled: Flow<Boolean> = context.pinDataStore.data.map { it[Keys.PIN_ENABLED] ?: false }
+    val isPinEnabled: Flow<Boolean> = context.pinDataStore.data.map { it[Keys.PIN_ENABLED] ?: (it[pinCorruptedKey] == true) }
     val isBiometricEnabled: Flow<Boolean> = context.pinDataStore.data.map { it[Keys.BIOMETRIC_ENABLED] ?: false }
     val failedAttempts: Flow<Int> = context.pinDataStore.data.map { it[Keys.FAILED_ATTEMPTS] ?: 0 }
     val lockoutUntil: Flow<Long> = context.pinDataStore.data.map { it[Keys.LOCKOUT_UNTIL] ?: 0L }
@@ -55,8 +61,8 @@ class PinPrefs @Inject constructor(
 
     suspend fun verifyPin(pin: String): VerifyResult = verifyMutex.withLock {
         val prefs = context.pinDataStore.data.first()
-        val hash = prefs[Keys.PIN_HASH] ?: return VerifyResult.NotSet
-        val salt = prefs[Keys.PIN_SALT] ?: return VerifyResult.NotSet
+        val hash = prefs[Keys.PIN_HASH] ?: return if (prefs[pinCorruptedKey] == true) VerifyResult.Corrupted else VerifyResult.NotSet
+        val salt = prefs[Keys.PIN_SALT] ?: return VerifyResult.Corrupted
         val lockoutUntil = prefs[Keys.LOCKOUT_UNTIL] ?: 0L
         if (lockoutUntil > System.currentTimeMillis()) return VerifyResult.LockedOut(lockoutUntil)
         val valid = hasher.verify(pin, PinHasher.HashedPin(hash, salt))
@@ -93,6 +99,7 @@ class PinPrefs @Inject constructor(
     sealed class VerifyResult {
         data object Success : VerifyResult()
         data object NotSet : VerifyResult()
+        data object Corrupted : VerifyResult()
         data class WrongPin(val remainingAttempts: Int) : VerifyResult()
         data class LockedOut(val until: Long) : VerifyResult()
     }

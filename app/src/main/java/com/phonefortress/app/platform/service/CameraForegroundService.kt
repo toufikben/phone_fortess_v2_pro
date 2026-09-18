@@ -87,7 +87,7 @@ class CameraForegroundService : Service(), LifecycleOwner {
                 throw e
             } catch (e: Exception) {
                 Logger.e(e, "Event processing failed")
-                runCatching { markCaptureRetryable(eventId, "capture-exception") }
+                runCatching { markCaptureRetryable(eventId, reason = "capture-exception") }
             } finally {
                 activeEvents.remove(eventId)
                 if (activeEvents.isEmpty()) {
@@ -108,7 +108,8 @@ class CameraForegroundService : Service(), LifecycleOwner {
             return
         }
         if (event.status == SecurityEventStatus.FAILED_RETRYABLE && event.operation != EventOperation.CAPTURE) return
-        event = eventRepository.transition(eventId, SecurityEventStatus.IN_PROGRESS, "capture-start", EventOperation.CAPTURE) ?: return
+        val attemptId = eventRepository.claimCapture(eventId) ?: return
+        event = eventRepository.getById(eventId) ?: return
         val evidenceDir = File(filesDir, Constants.DIR_EVIDENCE).apply { mkdirs() }
         val photosDir = File(evidenceDir, "photos").apply { mkdirs() }
         val audioDir = File(evidenceDir, "audio").apply { mkdirs() }
@@ -120,7 +121,7 @@ class CameraForegroundService : Service(), LifecycleOwner {
         } else null
         if (photoEnabled && photo == null) {
             eventRepository.updateMetadata(event)
-            markCaptureRetryable(eventId, "photo-capture-failed")
+            markCaptureRetryable(eventId, attemptId, "photo-capture-failed")
             return
         }
         photo?.let { event = event.copy(photoPath = it.absolutePath) }
@@ -134,21 +135,29 @@ class CameraForegroundService : Service(), LifecycleOwner {
         } else null
         if (audioEnabled && audio == null) {
             eventRepository.updateMetadata(event)
-            markCaptureRetryable(eventId, "audio-capture-failed")
+            markCaptureRetryable(eventId, attemptId, "audio-capture-failed")
             return
         }
         audio?.let { event = event.copy(audioPath = it.absolutePath) }
         if (event.audioPath != null) eventRepository.updateMetadata(event)
         if (securityPrefs.captureLocation.first()) withTimeoutOrNull(Constants.LOCATION_TIMEOUT_MS + 2_000L) { locationProvider.getCurrentLocation() }?.let { event = event.copy(latitude = it.latitude, longitude = it.longitude, locationAccuracy = it.accuracy) }
         eventRepository.updateMetadata(event)
-        event = eventRepository.transition(eventId, SecurityEventStatus.CAPTURED, "capture-complete", EventOperation.CAPTURE) ?: return
+        if (!eventRepository.transitionCaptureOwned(eventId, attemptId, SecurityEventStatus.CAPTURED, "capture-complete")) return
+        event = eventRepository.getById(eventId) ?: return
         eventRepository.updateMetadata(event)
         event = eventRepository.transition(eventId, SecurityEventStatus.SEND_PENDING, "dispatch-ready", EventOperation.SEND) ?: return
         WorkScheduler.dispatchEventNow(applicationContext, eventId)
     }
 
-    private suspend fun markCaptureRetryable(eventId: String, reason: String) {
+    private suspend fun markCaptureRetryable(eventId: String, attemptId: String? = null, reason: String) {
         val current = eventRepository.getById(eventId) ?: return
+        if (attemptId != null) {
+            if (current.captureAttemptId != attemptId) return
+            if (eventRepository.transitionCaptureOwned(eventId, attemptId, SecurityEventStatus.FAILED_RETRYABLE, reason)) {
+                WorkScheduler.scheduleCaptureRetry(applicationContext, eventId)
+            }
+            return
+        }
         val inProgress = when (current.status) {
             SecurityEventStatus.PENDING,
             SecurityEventStatus.DEFERRED -> eventRepository.transition(

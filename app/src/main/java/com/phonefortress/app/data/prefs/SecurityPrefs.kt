@@ -5,7 +5,9 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.preferencesOf
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import com.phonefortress.app.util.Constants
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -13,7 +15,11 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.securityDataStore by preferencesDataStore(name = "security_prefs")
+private val securityCorruptedKey = booleanPreferencesKey("corruption_detected")
+private val Context.securityDataStore by preferencesDataStore(
+    name = "security_prefs",
+    corruptionHandler = ReplaceFileCorruptionHandler { preferencesOf(securityCorruptedKey to true) }
+)
 
 /**
  * إعدادات الحماية الأساسية.
@@ -43,7 +49,7 @@ class SecurityPrefs @Inject constructor(
     }
 
     val protectionEnabled: Flow<Boolean> =
-        context.securityDataStore.data.map { it[Keys.PROTECTION_ENABLED] ?: false }
+        context.securityDataStore.data.map { it[Keys.PROTECTION_ENABLED] ?: (it[securityCorruptedKey] == true) }
 
     suspend fun setProtectionEnabled(enabled: Boolean) {
         context.securityDataStore.edit { it[Keys.PROTECTION_ENABLED] = enabled }
@@ -51,7 +57,7 @@ class SecurityPrefs @Inject constructor(
 
     val threshold: Flow<Int> =
         context.securityDataStore.data.map {
-            (it[Keys.THRESHOLD] ?: Constants.DEFAULT_THRESHOLD)
+            (it[Keys.THRESHOLD] ?: if (it[securityCorruptedKey] == true) Constants.MIN_THRESHOLD else Constants.DEFAULT_THRESHOLD)
                 .coerceIn(Constants.MIN_THRESHOLD, Constants.MAX_THRESHOLD)
         }
 

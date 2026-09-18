@@ -22,6 +22,8 @@ data class SecurityEvent(
     val retryCount: Int = 0,
     val lastTransitionAt: Long = timestamp,
     val sendClaimedAt: Long? = null,
+    val captureAttemptId: String? = null,
+    val sendOwnerToken: String? = null,
     val isTest: Boolean = false
 )
 

@@ -15,7 +15,7 @@ import com.phonefortress.app.data.local.entity.SecurityEventEntity
         SecurityEventEntity::class,
         SafeZoneEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

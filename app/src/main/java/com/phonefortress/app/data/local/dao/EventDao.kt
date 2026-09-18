@@ -30,11 +30,38 @@ interface EventDao {
     ): Int
 
     @Query("""
-        UPDATE security_events SET sendClaimedAt = :claimedAt
+        UPDATE security_events SET status = 'IN_PROGRESS', operation = 'CAPTURE',
+            captureAttemptId = :attemptId, lastTransitionReason = 'capture-start', lastTransitionAt = :now
+        WHERE eventId = :eventId AND ((status IN ('PENDING','DEFERRED')) OR
+            (status = 'FAILED_RETRYABLE' AND operation = 'CAPTURE'))
+    """)
+    suspend fun claimCapture(eventId: String, attemptId: String, now: Long): Int
+
+    @Query("""
+        UPDATE security_events SET status = :targetStatus, operation = :operation,
+            lastTransitionReason = :reason, lastTransitionAt = :now,
+            retryCount = retryCount + CASE WHEN :targetStatus = 'FAILED_RETRYABLE' THEN 1 ELSE 0 END
+        WHERE eventId = :eventId AND status = 'IN_PROGRESS' AND operation = 'CAPTURE'
+          AND captureAttemptId = :attemptId
+    """)
+    suspend fun transitionCapture(eventId: String, attemptId: String, targetStatus: String, operation: String, reason: String, now: Long): Int
+
+    @Query("""
+        UPDATE security_events SET sendClaimedAt = :claimedAt, sendOwnerToken = :ownerToken
         WHERE eventId = :eventId AND status = 'SEND_PENDING'
           AND (sendClaimedAt IS NULL OR sendClaimedAt < :expiredBefore)
     """)
-    suspend fun claimSend(eventId: String, claimedAt: Long, expiredBefore: Long): Int
+    suspend fun claimSend(eventId: String, ownerToken: String, claimedAt: Long, expiredBefore: Long): Int
+
+    @Query("""
+        UPDATE security_events SET status = :targetStatus, operation = 'SEND',
+            lastTransitionReason = :reason, lastTransitionAt = :now,
+            retryCount = retryCount + CASE WHEN :targetStatus = 'FAILED_RETRYABLE' THEN 1 ELSE 0 END,
+            sendClaimedAt = NULL
+        WHERE eventId = :eventId AND status = :expectedStatus AND operation = 'SEND'
+          AND sendOwnerToken = :ownerToken
+    """)
+    suspend fun transitionSendOwned(eventId: String, expectedStatus: String, targetStatus: String, ownerToken: String, reason: String, now: Long): Int
 
     @Query("""
         UPDATE security_events SET

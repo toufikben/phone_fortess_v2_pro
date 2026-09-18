@@ -54,9 +54,9 @@ class EventRepositoryTest {
         coVerify { dao.transitionStatus("evt-1", "IN_PROGRESS", "FAILED_RETRYABLE", "CAPTURE", "capture-failed", any()) }
     }
     @Test fun `send claim reports only the winning worker`() = runTest {
-        coEvery { dao.claimSend("evt-1", 1_000L, any()) } returns 1
-        assertThat(repo.claimForSend("evt-1", 1_000L)).isTrue()
-        coVerify { dao.claimSend("evt-1", 1_000L, any()) }
+        coEvery { dao.claimSend("evt-1", any(), 1_000L, any()) } returns 1
+        assertThat(repo.claimForSend("evt-1", 1_000L)).isNotNull()
+        coVerify { dao.claimSend("evt-1", any(), 1_000L, any()) }
     }
     @Test fun `active events are mapped with bounded limit`() = runTest {
         coEvery { dao.getActive(Constants.MAX_EVENT_BATCH_SIZE) } returns emptyList()

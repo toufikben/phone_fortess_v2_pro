@@ -31,6 +31,8 @@ data class SecurityEventEntity(
     val retryCount: Int,
     val lastTransitionAt: Long,
     val sendClaimedAt: Long?,
+    val captureAttemptId: String?,
+    val sendOwnerToken: String?,
     val isTest: Boolean
 ) {
     fun toDomain() = SecurityEvent(
@@ -42,7 +44,8 @@ data class SecurityEventEntity(
         status = runCatching { SecurityEventStatus.valueOf(status) }.getOrDefault(SecurityEventStatus.PENDING),
         operation = runCatching { EventOperation.valueOf(operation) }.getOrDefault(EventOperation.CAPTURE),
         lastTransitionReason = lastTransitionReason, retryCount = retryCount,
-        lastTransitionAt = lastTransitionAt, sendClaimedAt = sendClaimedAt, isTest = isTest
+        lastTransitionAt = lastTransitionAt, sendClaimedAt = sendClaimedAt,
+        captureAttemptId = captureAttemptId, sendOwnerToken = sendOwnerToken, isTest = isTest
     )
 
     companion object {
@@ -54,7 +57,8 @@ data class SecurityEventEntity(
             threatReasons = e.threatReasons.joinToString("|||"), status = e.status.name,
             operation = e.operation.name, lastTransitionReason = e.lastTransitionReason,
             retryCount = e.retryCount, lastTransitionAt = e.lastTransitionAt,
-            sendClaimedAt = e.sendClaimedAt, isTest = e.isTest
+            sendClaimedAt = e.sendClaimedAt, captureAttemptId = e.captureAttemptId,
+            sendOwnerToken = e.sendOwnerToken, isTest = e.isTest
         )
     }
 }

@@ -33,7 +33,9 @@ assert "getActive()" in worker and "isStale" in worker
 for receiver in (boot, admin, geofence):
     assert "goAsync()" in receiver and "pendingResult.finish()" in receiver
 assert "retryCount" in entity and "lastTransitionAt" in entity and "sendClaimedAt" in entity
-assert "version = 6" in database and "MIGRATION_5_6" in room_migrations
+assert "version = 7" in database
+assert "MIGRATION_5_6" in room_migrations and "MIGRATION_6_7" in room_migrations
+assert "captureAttemptId" in entity and "sendOwnerToken" in entity
 assert "RecoveryPolicyTest" in " ".join(str(p) for p in (root / "app/src/test/java").rglob("*.kt"))
 assert not (root / "app/src/main/java/com/phonefortress/app/platform/service/CameraForegroundService.kt").read_text().count("START_REDELIVER_INTENT")
 print("reliability configuration verification passed")
